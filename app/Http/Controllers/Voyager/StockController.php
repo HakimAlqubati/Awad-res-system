@@ -36,7 +36,11 @@ class StockController extends VoyagerBaseController
         $purchaseInoivce = PurchaseInvoice::get();
         $purchaseInoivceDetails = PurchaseInvoiceDetails::get();
 
-        
+
         return view('voyager::stock.stock-report');
+    }
+
+    public function stock(Request $request)
+    {
     }
 }
