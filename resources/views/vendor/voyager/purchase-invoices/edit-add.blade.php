@@ -115,8 +115,8 @@ $add = is_null($dataTypeContent->getKey());
                                         <th> <label style="font-weight: bold">Notes </label></th>
                                         <th> <label style="font-weight: bold">Discount </label></th>
                                         <th>
-                                            <a href="javascript:void(0);" style="font-size:18px;" id="addMore"
-                                                title="Add More Person"><span class="glyphicon glyphicon-plus"></span></a>
+                                            {{-- <a href="javascript:void(0);" style="font-size:18px;" id="addMore"
+                                                title="Add More Person"><span class="glyphicon glyphicon-plus"></span></a> --}}
                                         </th>
                                         <th></th>
                                     </tr>
@@ -168,8 +168,9 @@ $add = is_null($dataTypeContent->getKey());
                                         </td>
 
                                         <td>
-                                            <a href="javascript:void(0);" style="font-size:18px;" class="create-one"
-                                                title="Add More Person"><span class="glyphicon glyphicon-plus"></span></a>
+                                            <a href="javascript:void(0);" style="font-size:18px;" id="create-one"
+                                                title="Add More Person"><span
+                                                    class="glyphicon glyphicon-plus"></span></a>
                                         </td>
                                         <td>
                                             <a href='javascript:void(0);' class='remove'><span
@@ -227,19 +228,20 @@ $add = is_null($dataTypeContent->getKey());
     <script>
         $(function() {
             // $('#addMore').on('click', function() {
-
             //     var data = $("#my-table tr:eq(3)").clone(true).appendTo("#my-table");
             //     data.find("input").val('');
             // });
-            $(document).on('click', '.create-one', function() {
+            $('#create-one').on('click', function() {
                 var trIndex = $(this).closest("tr").index();
- 
-                     consolo.log($(this).closest("tr").html())
+                var data = $("#my-table tr:eq(3)").clone(true).appendTo("#my-table");
+                
+                
+                console.log($(this).closest("tr").html());
 
             });
+
             $(document).on('click', '.remove', function() {
                 var trIndex = $(this).closest("tr").index();
-
                 if (trIndex == 0) {
                     alert("Sorry!! Can't remove first row!");
                 } else {
@@ -247,6 +249,7 @@ $add = is_null($dataTypeContent->getKey());
                 }
             });
         });
+        
         $(document).ready(function() {
 
 

@@ -43,4 +43,8 @@ class StockController extends VoyagerBaseController
     public function stock(Request $request)
     {
     }
+
+    public function get(Request $request) {
+        
+    }
 }
