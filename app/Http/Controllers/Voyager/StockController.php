@@ -33,18 +33,31 @@ class StockController extends VoyagerBaseController
     public function getReport()
     {
 
-        $purchaseInoivce = PurchaseInvoice::get();
-        $purchaseInoivceDetails = PurchaseInvoiceDetails::get();
+        $strSelect = "select purchase_invoices.supplier_id , users.name as supplier_name 
+        , purchase_invoices.stock_id , stocks.name as stock_name
+         ,purchase_invoice_details.product_id , products.name as product_name
+         , purchase_invoice_details.unit_id, units.name as unit_name
+         , purchase_invoice_details.qty
+         ,purchase_invoice_details.price 
+         
+         from purchase_invoices
+         left join purchase_invoice_details on (purchase_invoices.id = purchase_invoice_details.purchase_invoice_id) 
+         left join products on (products.id = purchase_invoice_details.product_id) 
+         left join users on (users.id = purchase_invoices.supplier_id) 
+         left join units on (units.id =purchase_invoice_details.unit_id) 
+         left join stocks on (stocks.id = purchase_invoices.stock_id) 
+         ";
 
-
-        return view('voyager::stock.stock-report');
+        $data = DB::select($strSelect);
+       
+        return view('voyager::stock.stock-report', compact('data'));
     }
 
     public function stock(Request $request)
     {
     }
 
-    public function get(Request $request) {
-        
+    public function get(Request $request)
+    {
     }
 }
