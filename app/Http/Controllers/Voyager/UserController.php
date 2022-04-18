@@ -482,6 +482,7 @@ class UserController extends VoyagerBaseController
         }
 
         $roles = $this->getRoles();
+     
         $branchUsers = $this->getBranchUsers();
 
         return Voyager::view($view, compact(
@@ -495,7 +496,7 @@ class UserController extends VoyagerBaseController
 
     public function getRoles()
     {
-        $data = Role::whereIn('id', array(7, 3, 6,  5, 8))->get();
+        $data = Role::whereIn('id', array(7, 3, 6,  5, 9, 8))->get();
         return $data;
     }
 
@@ -514,7 +515,7 @@ class UserController extends VoyagerBaseController
     public function store(Request $request)
     {
 
-       
+
 
         if ($request->all()['owner_id'] == 'choose') {
             $owner_id = null;
@@ -532,7 +533,7 @@ class UserController extends VoyagerBaseController
             ]);
         } elseif ($request->role == 8 && $request->owner_id == 'choose') {
             return $redirect->with([
-                'message'    => "You have to choose owner for user  " .  $request->username ,
+                'message'    => "You have to choose owner for user  " .  $request->username,
                 'alert-type' => 'error',
             ]);
         } else {

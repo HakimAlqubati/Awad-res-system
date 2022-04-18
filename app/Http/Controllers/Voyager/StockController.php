@@ -30,27 +30,95 @@ use TCG\Voyager\Http\Controllers\Traits\BreadRelationshipParser;
 class StockController extends VoyagerBaseController
 {
     use BreadRelationshipParser;
-    public function getReport()
+    public function getReport(Request $request)
     {
 
-        $strSelect = "select purchase_invoices.supplier_id , users.name as supplier_name 
-        , purchase_invoices.stock_id , stocks.name as stock_name
-         ,purchase_invoice_details.product_id , products.name as product_name
-         , purchase_invoice_details.unit_id, units.name as unit_name
-         , purchase_invoice_details.qty
-         ,purchase_invoice_details.price 
-         
-         from purchase_invoices
-         left join purchase_invoice_details on (purchase_invoices.id = purchase_invoice_details.purchase_invoice_id) 
-         left join products on (products.id = purchase_invoice_details.product_id) 
-         left join users on (users.id = purchase_invoices.supplier_id) 
-         left join units on (units.id =purchase_invoice_details.unit_id) 
-         left join stocks on (stocks.id = purchase_invoices.stock_id) 
+        $strSelect = "select
+        purchase_invoices.supplier_id,
+        users.name as supplier_name,
+        purchase_invoices.stock_id,
+        stocks.name as stock_name,
+        purchase_invoice_details.product_id,
+        products.name as product_name,
+        purchase_invoice_details.unit_id,
+        units.name as unit_name,
+
+        case when order_details.qty IS not NULL or order_details.qty != ''
+            then sum(purchase_invoice_details.qty)  - sum(order_details.qty)
+            else sum(purchase_invoice_details.qty) 
+        end as qty ,
+        purchase_invoice_details.price
+        from
+        purchase_invoices
+        left join purchase_invoice_details on (
+            purchase_invoices.id = purchase_invoice_details.purchase_invoice_id
+        )
+        left join products on (
+            products.id = purchase_invoice_details.product_id
+        )
+        left join users on (users.id = purchase_invoices.supplier_id)
+        left join units on (units.id = purchase_invoice_details.unit_id)
+        left join stocks on (stocks.id = purchase_invoices.stock_id)
+        left join order_details on (
+            (
+                order_details.product_id = purchase_invoice_details.product_id
+            )
+            and (
+                order_details.product_unit_id = purchase_invoice_details.unit_id
+            )
+        )
+     
          ";
 
+
+        $strSelect .= "where purchase_invoices.id IS NOT NULL";
+
+        if ($request->supplier_id && $request->supplier_id != null) {
+            $strSelect .= " and  purchase_invoices.supplier_id = " . $request->supplier_id;
+        }
+
+        if ($request->product_id && $request->product_id != null) {
+            $strSelect .= " and  purchase_invoice_details.product_id = " . $request->product_id;
+        }
+
+        if ($request->stock_id && $request->stock_id != null) {
+            $strSelect .= "  and purchase_invoices.stock_id = " . $request->stock_id;
+        }
+
+        if ($request->unit_id && $request->unit_id != null) {
+            $strSelect .= "  and purchase_invoice_details.unit_id = " . $request->unit_id;
+        }
+
+
+
+
+        $strSelect .= " group by
+        purchase_invoice_details.product_id,
+        purchase_invoice_details.unit_id,
+        order_details.product_unit_id,
+        order_details.product_id";
+
         $data = DB::select($strSelect);
-       
-        return view('voyager::stock.stock-report', compact('data'));
+
+
+
+        $stocks = Stock::get();
+
+        $suppliers = User::where('role_id', 9)->get();
+
+        $products = Product::get();
+        $units = Unit::get();
+
+        return view(
+            'voyager::stock.stock-report',
+            compact(
+                'data',
+                'stocks',
+                'suppliers',
+                'products',
+                'units'
+            )
+        );
     }
 
     public function stock(Request $request)

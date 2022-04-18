@@ -381,19 +381,12 @@ class PurchaseInvoiceController extends VoyagerBaseController
     public function update(Request $request, $id)
     {
 
-
-
-
         $product = Product::find($id);
-
-
 
         $product->name =    $request->name;
         $product->desc = $request->desc;
         $product->code =    $request->code;
         $product->cat_id =    $request->cat_id;
-
-
 
         if (array_key_exists('unit_price_id', $request->all()) == true) {
 
@@ -572,11 +565,13 @@ class PurchaseInvoiceController extends VoyagerBaseController
 
         $stocks = Stock::get();
 
-        $suppliers = User::get();
+        $suppliers = User::where('role_id', 9)->get();
 
         $products = Product::get();
 
         $units = Unit::get();
+
+        
 
         return Voyager::view($view, compact(
             'dataType',
@@ -600,10 +595,10 @@ class PurchaseInvoiceController extends VoyagerBaseController
     {
 
 
-        
+
+        // dd($request->all());
 
 
-        
 
         $purchaseInvoice = new PurchaseInvoice(
             [
@@ -620,30 +615,36 @@ class PurchaseInvoiceController extends VoyagerBaseController
 
         foreach ($request->unit as $key => $value) {
 
-            $unit = $request->unit[$key];
-            $product = $request->product[$key];
-            $qty = $request->qty[$key];
-            $price = $request->price[$key];
+            if ($request->unit[$key] != null && $request->product[$key] != null) {
+                $unit = $request->unit[$key];
+                $product = $request->product[$key];
+                $qty = $request->qty[$key];
+                $price = $request->price[$key];
 
-            $total = $request->total[$key];
-            $notes = $request->notes_details[$key];
-            $discount = $request->discount[$key];
+                $total = $request->total[$key];
+                $notes = $request->notes_details[$key];
+                $discount = $request->discount[$key];
 
-            $obj = new stdClass();
-            $obj->unit_id = $unit;
-            $obj->product_id = $product;
-            $obj->qty = $qty;
-            $obj->price = $price;
+                $obj = new stdClass();
+                // $obj->product_id =    $product;
+                $obj->product_id =  Product::where('name', $product)->first()->id;
+                // $obj->unit_id =    $unit;
+                $obj->unit_id =  Unit::where('name', $unit)->first()->id;
+                $obj->qty = $qty;
+                $obj->price = $price;
 
-            $obj->total_price = $total;
-            $obj->notes = $notes;
-            $obj->discount = $discount;
+                $obj->total_price = $total;
+                $obj->notes = $notes;
+                $obj->discount = $discount;
 
 
-            $obj->purchase_invoice_id   = $purchaseInvoice->id;
+                $obj->purchase_invoice_id   = $purchaseInvoice->id;
 
-            $details[] = $obj;
+                $details[] = $obj;
+            }
         }
+
+
         $details = json_decode(json_encode($details), true);
 
 

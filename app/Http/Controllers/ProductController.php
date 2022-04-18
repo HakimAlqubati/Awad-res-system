@@ -59,21 +59,21 @@ class ProductController extends Controller
             // $obj->created_at = $value->created_at;
             // $obj->updated_at = $value->updated_at;
 
-            if($this->getProductUnitPrices($value->id,$value->cat_id) != null){
+            if ($this->getProductUnitPrices($value->id, $value->cat_id) != null) {
 
-                $obj->unitPrices = $this->getProductUnitPrices($value->id,$value->cat_id);
-              
+                $obj->unitPrices = $this->getProductUnitPrices($value->id, $value->cat_id);
+
                 $result[] = $obj;
             }
         }
-        return array_filter ($result);
+        return array_filter($result);
     }
 
-    public function getProductUnitPrices($productId,$cat)
+    public function getProductUnitPrices($productId, $cat)
     {
         $unitPrices =  UnitPrice::where('product_id', $productId)->get();
-        
-        if(count($unitPrices) > 0) {
+
+        if (count($unitPrices) > 0) {
 
             foreach ($unitPrices as $key => $value) {
                 $obj = new stdClass();
@@ -86,14 +86,8 @@ class ProductController extends Controller
                 $obj->price = $value->price;
                 $result[] = $obj;
             }
-          
-    
-                return $result;
-
+            return $result;
         }
-        
-      
-
     }
 
     /**

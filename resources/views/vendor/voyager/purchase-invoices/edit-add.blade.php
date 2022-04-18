@@ -41,7 +41,8 @@ $add = is_null($dataTypeContent->getKey());
 
                         <div class="panel-body">
 
-                            <table class="table table-striped" id="my-table">
+
+                            <table class="table table-striped" id="my-table" cellspacing="0">
                                 <thead>
 
                                     <tr>
@@ -105,81 +106,67 @@ $add = is_null($dataTypeContent->getKey());
                                                 placeholder="Write some notes here..."></textarea>
                                         </td>
                                     </tr>
-                                    <tr>
 
+                            </table>
+
+                            <table class="table table-striped" id="table-details" cellspacing="0">
+
+                                <thead>
+                                    <tr>
                                         <th> <label style="font-weight: bold"> Product </label></th>
+                                        <th> <label style="font-weight: bold"> Quantity </label></th>
                                         <th> <label style="font-weight: bold"> Unit </label></th>
                                         <th> <label style="font-weight: bold">Price </label></th>
-                                        <th> <label style="font-weight: bold"> Quantity </label></th>
                                         <th> <label style="font-weight: bold">Total </label></th>
                                         <th> <label style="font-weight: bold">Notes </label></th>
                                         <th> <label style="font-weight: bold">Discount </label></th>
-                                        <th>
-                                            {{-- <a href="javascript:void(0);" style="font-size:18px;" id="addMore"
-                                                title="Add More Person"><span class="glyphicon glyphicon-plus"></span></a> --}}
-                                        </th>
-                                        <th></th>
                                     </tr>
                                 </thead>
+ 
                                 <tbody>
-                                    <tr class="row_unit" id="row_unit">
-                                        <td>
-                                            <select class="form-control" name="product[]" id="" required>
+                                    @for ($i = 0; $i < 30; $i++)
+                                        <tr class="row_unit" id="row_unit">
 
-                                                <?php  foreach ($products as $key => $value) {
-                                         ?>
-                                                <option value="<?php echo $value->id; ?>"><?php echo $value->name; ?></option>
+                                            <td>
+                                                <input autocomplete="off" type="text" id="product{{ $i }}"
+                                                    name="product[]" placeholder="Search product"
+                                                    class="form-control product" />
+                                            </td>
 
-                                                <?php } ?>
-                                            </select>
+                                            <td>
+                                                <input autocomplete="off" class="form-control" type="text" id="qty"
+                                                    name="qty[]" id="">
+                                            </td>
 
-                                        </td>
-                                        <td>
-                                            <select class="form-control" name="unit[]" id="" required>
+                                            <td>
+                                                <input autocomplete="off" type="text" id="unit{{ $i }}"
+                                                    name="unit[]" placeholder="Search unit" class="form-control unit" />
+                                            </td>
 
-                                                <?php  foreach ($units as $key => $value) {
-                                         ?>
-                                                <option value="<?php echo $value->id; ?>"><?php echo $value->name; ?></option>
+                                            <td>
+                                                <input autocomplete="off" class="form-control" type="text" id="price"
+                                                    name="price[]" id="">
+                                            </td>
 
-                                                <?php } ?>
-                                            </select>
+                                            <td>
+                                                <input autocomplete="off" class="form-control" type="text" id="total"
+                                                    value="0" name="total[]" id="">
+                                            </td>
 
-                                        </td>
+                                            <td>
+                                                <input autocomplete="off" class="form-control" type="text"
+                                                    name="notes_details[]" id="">
+                                            </td>
 
-                                        <td>
-                                            <input class="form-control" type="number" id="price" name="price[]" id=""
-                                                required>
-                                        </td>
+                                            <td>
+                                                <input autocomplete="off" class="form-control" type="text"
+                                                    name="discount[]" id="">
+                                            </td>
 
-                                        <td>
-                                            <input class="form-control" type="number" id="qty" name="qty[]" id=""
-                                                required>
-                                        </td>
-
-                                        <td>
-                                            <input class="form-control" type="number" id="total" value="0" name="total[]"
-                                                id="" readonly required>
-                                        </td>
-                                        <td>
-                                            <input class="form-control" type="text" name="notes_details[]" id="" required>
-                                        </td>
-                                        <td>
-                                            <input class="form-control" type="number" name="discount[]" id="" required>
-                                        </td>
-
-                                        <td>
-                                            <a href="javascript:void(0);" style="font-size:18px;" id="create-one"
-                                                title="Add More Person"><span class="glyphicon glyphicon-plus"></span></a>
-                                        </td>
-                                        <td>
-                                            <a href='javascript:void(0);' class='remove'><span
-                                                    class='glyphicon glyphicon-remove'></span></a>
-                                        </td>
-
-                                    </tr>
+                                        </tr>
+                                    @endfor
                                 </tbody>
                             </table>
-
 
                             <div style="width: 100%;text-align: center">
                                 <button type="submit" class="btn btn-primary">Save</button>
@@ -251,23 +238,102 @@ $add = is_null($dataTypeContent->getKey());
         $(document).ready(function() {
 
 
+            // --------
+            var routeautocompleteProduct = "{{ url('autocomplete-product') }}";
+            var routeautocompleteUnit = "{{ url('autocomplete-unit') }}";
+
+
+            for (let index = 0; index < 30; index++) {
+
+                // for product
+                $('#product' + index).typeahead({
+                    source: function(query, process) {
+                        return $.get(routeautocompleteProduct, {
+                            query: query
+                        }, function(data) {
+                            return process(data);
+                        });
+                    }
+                });
+
+
+                // for unit
+                $('#unit' + index).typeahead({
+                    source: function(query, process) {
+                        return $.get(routeautocompleteUnit, {
+                            query: query
+                        }, function(data) {
+                            return process(data);
+                        });
+                    }
+                });
+            }
+
+
+
+
+
+
+            // --------
+
+
 
             $(document).on('mouseup keyup', '#qty', function() {
 
-                var price = $(this).closest("tr").find('td:eq(2) input').val();
-                var qty = $(this).closest("tr").find('td:eq(3) input').val();
+                var price = $(this).closest("tr").find('td:eq(3) input').val();
+                var qty = $(this).closest("tr").find('td:eq(1) input').val();
                 $(this).closest("tr").find('td:eq(4) input').val(price * qty)
-
             });
+
             $(document).on('mouseup keyup', '#price', function() {
 
-                var price = $(this).closest("tr").find('td:eq(2) input').val();
-                var qty = $(this).closest("tr").find('td:eq(3) input').val();
+                var price = $(this).closest("tr").find('td:eq(3) input').val();
+                var qty = $(this).closest("tr").find('td:eq(1) input').val();
                 $(this).closest("tr").find('td:eq(4) input').val(price * qty)
-
             });
+
+
+
+            $('td input').bind('paste', null, function(e) {
+                txt = $(this);
+                console.log(txt)
+                // alert( txt)
+                setTimeout(function() {
+                    var values = txt.val().split(/\s+/);
+                    var currentRowIndex = txt.parent().parent().index();
+                    var currentColIndex = txt.parent().index();
+
+                    var totalRows = $('#table-details tbody tr').length;
+                    var totalCols = $('#table-details thead th').length;
+
+                    var count = 0;
+
+                    for (var i = currentColIndex; i < totalCols; i++) {
+                        if (i != currentColIndex)
+                            if (i != currentColIndex)
+                                currentRowIndex = 0;
+                        for (var j = currentRowIndex; j < totalRows; j++) {
+                            var value = values[count];
+                            var inp = $('#table-details tbody tr').eq(j).find('td').eq(i).find(
+                                'input');
+                            inp.val(value);
+                            count++;
+
+                        }
+                    }
+                }, 0);
+            });
+
 
 
         });
     </script>
+
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-3-typeahead/4.0.1/bootstrap3-typeahead.min.js">
+    
+    </script>
+
+
 @stop

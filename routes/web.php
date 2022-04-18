@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AutoCompleteController;
 use App\Http\Controllers\TransferController;
 use App\Http\Controllers\Voyager\OrderController;
 use App\Http\Controllers\Voyager\ProductController;
@@ -51,6 +52,10 @@ Route::get('/get-excel/{id}', [TransferController::class, 'createExcel']);
 
 // for purchase invoice
 Route::post('/add-purchase-invoice', [PurchaseInvoiceController::class, 'store']);
+Route::get('/autocomplete-product', [AutoCompleteController::class, 'autocompleteProduct']);
+Route::get('/autocomplete-unit', [AutoCompleteController::class, 'autocompleteUnit']);
+
+
 
 Route::post('/add-user', [UserController::class, 'store']);
 Route::put('/update-user/{id}', [UserController::class, 'update']);
