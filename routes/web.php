@@ -75,6 +75,8 @@ Route::get('download/{file}', [OrderController::class, 'getPdf']);
 Route::get('orders/export/{id}', [OrderController::class, 'export']);
 Route::get('/admin/filter-orders', [OrderController::class, 'filterOrder']);
 
+// for order report
+Route::get('/admin/order-report', [OrderController::class, 'getReport']);
 
 // Route::get('storage/{filename}', function ($filename)
 // {

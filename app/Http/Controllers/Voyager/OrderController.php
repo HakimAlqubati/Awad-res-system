@@ -48,6 +48,82 @@ class OrderController extends  VoyagerBaseController
     //
     //****************************************
 
+    public function getReport(Request $request)
+    {
+        $strSelect = "select orders.id, orders.request_state_id , request_states.name as state_name
+        , orders.created_by,  users.name as created_by_name ,orders.branch_id, branches.name as branch_name
+       ,  orders.created_at
+        ,order_details.product_id , products.name as product_name, order_details.product_unit_id , units.name as unit_name
+        , sum(order_details.qty) as qty , sum(order_details.price) as price
+        from orders
+        left join order_details on (orders.id = order_details.order_id)
+        left join branches on (orders.branch_id = branches.id)
+        left join request_states on (orders.request_state_id = request_states.id)
+        left join users on (orders.created_by = users.id)
+        left join products on (order_details.product_id = products.id)
+        left join units on (order_details.product_unit_id = units.id)
+         ";
+
+        $strSelect .= "where orders.active =1";
+
+        if ($request->branch_id && $request->branch_id != null) {
+            $strSelect .= " and  orders.branch_id = " . $request->branch_id;
+        }
+
+
+        if ($request->product_id && $request->product_id != null) {
+            $strSelect .= " and  order_details.product_id = " . $request->product_id;
+        }
+
+
+        if ($request->unit_id && $request->unit_id != null) {
+            $strSelect .= " and  order_details.product_unit_id = " . $request->unit_id;
+        }
+
+
+
+
+        if (($request->from_date)) {
+            $from_date = $request->from_date;
+            if ($request->to_date) {
+                $to_date = $request->to_date;
+            } else {
+                $to_date = date('Y-m-d');
+                // $to_date = date('Y-m-d', strtotime(DB::select('select max(created_at) as max_date from orders')[0]->max_date));
+            }
+
+            $strSelect .= " and orders.created_at between '$from_date' AND '$to_date'  ";
+        }
+        //  else {
+        //     $from_date =  date('Y-m-d', strtotime(DB::select('select min(created_at) as min_date from orders')[0]->min_date));
+        //     $to_date = date('Y-m-d', strtotime(DB::select('select max(created_at) as max_date from orders')[0]->max_date));
+        // }
+
+
+        // $strSelect .= " where orders.created_at between '$from_date' AND '$to_date'  ";
+
+
+        $strSelect .= " group by
+        products.cat_id,
+        order_details.product_unit_id,
+        order_details.product_id
+        ";
+
+
+        $strSelect .= " ORDER BY id DESC
+        limit 100";
+
+        if ($request->branch_id && $request->branch_id != null) {
+            $data = DB::select($strSelect);
+        } else {
+            $data = [];
+        }
+
+        $branches = Branch::get();
+        $products = Product::get();
+        $units = Unit::get();
+        return view('voyager::orders.order-report', compact('data', 'branches', 'products', 'units'));
+    }
     public function index(Request $request)
     {
         // GET THE SLUG, ex. 'posts', 'pages', etc.
