@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AutoCompleteController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\TransferController;
 use App\Http\Controllers\Voyager\OrderController;
 use App\Http\Controllers\Voyager\ProductController;
@@ -77,6 +78,9 @@ Route::get('/admin/filter-orders', [OrderController::class, 'filterOrder']);
 
 // for order report
 Route::get('/admin/order-report', [OrderController::class, 'getReport']);
+
+
+Route::get('/admin/dashboard', [DashboardController::class, 'index']);
 
 // Route::get('storage/{filename}', function ($filename)
 // {

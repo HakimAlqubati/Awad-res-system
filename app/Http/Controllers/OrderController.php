@@ -417,6 +417,15 @@ class OrderController extends Controller
                 'branch_id' => $branchId,
             ]
         );
+
+        // // to update orders quqntity in branches
+        // $branchData = Branch::where('id', $branchId)->first();
+
+        // $number_orders = $branchData->number_orders;
+        // $branchData->number_orders = $number_orders + $data['qty'];
+        // $branchData->save();
+        // // -------
+
         $order->save();
         return $order;
     }
@@ -438,6 +447,8 @@ class OrderController extends Controller
             $obj->available_qty = $data['qty'];
             $obj->product_name = $data['product_name'];
             $obj->order_id = $orderId;
+
+
 
             $obj->created_by =  $currentUser;
             $productsNotFoundResult[] = $obj;
@@ -468,6 +479,15 @@ class OrderController extends Controller
             $obj->price = $resultPrice  * $data['qty'];
             $obj->product_name = null;
             $obj->created_by = $currentUser;
+
+            // to update orders quqntity in products
+            $productData = Product::where('id', $data['product_id'])->first();
+
+            $number_orders = $productData->number_orders;
+            $productData->number_orders = $number_orders + $data['qty'];
+            $productData->save();
+            // -------
+
             $answers[] = $obj;
         }
 
