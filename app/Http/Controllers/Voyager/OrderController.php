@@ -72,8 +72,9 @@ class OrderController extends  VoyagerBaseController
 
 
         if ($request->product_id && $request->product_id != null) {
-            $strSelect .= " and  order_details.product_id = " . $request->product_id;
+            $strSelect .= " and  order_details.product_id in ( " . implode(',', $request->product_id) . " )";
         }
+
 
 
         if ($request->unit_id && $request->unit_id != null) {

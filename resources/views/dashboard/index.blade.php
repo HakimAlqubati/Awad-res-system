@@ -48,44 +48,24 @@
                 <div class="panel panel-bordered">
                     <div class="container">
                         <div class="col-md-12" style="text-align: center;padding: 30px 0px 30px 0px;">
-                            {{-- Start total customers --}}
-                            <div class="col-md-5"
-                                style="padding-top: 32px; color: black; border: 2px solid;
-                                                                                                                                                                                                                                                                    padding-right: 0px;
-                                                                                                                                                                                                                                                                    padding-left: 0px;
-                                                                                                                                                                                                                                                         border-radius: 45px;">
-                                <p style="font-weight: bold">
-                                    Total Branches
-                                </p>
-                                <div>
-                                    <img src="{{ url('/') }}/storage/icons/user.png" />
 
-                                    <a href={{ url('/') . '/dashboard/customers' }}>
-                                        <p style="font-weight: bold"> 23 Branch
-                                        </p>
-                                    </a>
 
-                                </div>
-                            </div>
 
-                            <div class="col-md-2">
-
-                            </div>
 
 
                             {{-- Start total orders --}}
-                            <div class="col-md-5"
+                            <div class="col-md-12"
                                 style="padding-top: 32px; color: black; border: 2px solid;
-                                                                                                                                                                                                                                                                    padding-right: 0px;
-                                                                                                                                                                                                                                                                    padding-left: 0px;
-                                                                                                                                                                                                                                                                    border-radius: 45px;">
+                                                                                                                                                                                                                                                                            padding-right: 0px;
+                                                                                                                                                                                                                                                                            padding-left: 0px;
+                                                                                                                                                                                                                                                                            border-radius: 45px;">
                                 <p style="font-weight: bold"> Total orders </p>
                                 <div>
-                                    <img style="width: 100;height: 100;"
-                                        src="{{ url('/') }}/storage/icons/fast-delivery.png" />
-
+                                    <img width="100px"
+                                        src="{{ url('/') }}/fast-delivery.png" />
+                                    
                                     <a href={{ url('/') . '/admin/orders' }}>
-                                        <p style="font-weight: bold"> 500 Order </p>
+                                        <p style="font-weight: bold"> {{ $ordersCount }} Order </p>
                                     </a>
                                 </div>
                             </div>
@@ -146,7 +126,7 @@
                     legendText: "{label}",
                     indexLabelFontSize: 16,
                     indexLabel: "{label} - #percent%",
-                    yValueFormatString: "฿#,##0",
+                    yValueFormatString: "#,##0",
                     dataPoints: <?php echo json_encode($dataPoints, JSON_NUMERIC_CHECK); ?>
                 }]
             });

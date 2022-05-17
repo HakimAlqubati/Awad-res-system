@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Branch;
+use App\Models\Order;
 use App\Models\Product;
 use Illuminate\Http\Request;
 
@@ -15,7 +16,7 @@ class DashboardController extends Controller
 
 
 
-       
+
         $firstChart = Product::skip(0)->take(10)->orderBy('number_orders', 'DESC')->get();
         foreach ($firstChart as $key => $value) {
             $finalDataFirstChart[] = [
@@ -33,6 +34,8 @@ class DashboardController extends Controller
         }
         // ----------
 
+        $ordersCount = Order::get()->count();
+
 
 
         $thirdChart = Branch::with('orders')->get();
@@ -47,7 +50,8 @@ class DashboardController extends Controller
         return view('dashboard.index', compact(
             'finalDataFirstChart',
             'finalDataSecondChart',
-            'finalDataThirdChart'
+            'finalDataThirdChart',
+            'ordersCount'
         ));
     }
 }

@@ -30,9 +30,10 @@
             </div>
 
 
+            
             <div class="form-group">
                 <label for="status">Product:</label>
-                <select class="form-control" name="product_id" id="product_id">
+                <select class="form-control" name="product_id[]" id="product_id" multiple>
 
                     <option value="">-Choose-</option>
                     @foreach ($products as $item)
@@ -102,12 +103,11 @@
                                     <td><?php echo $item->unit_name; ?> </td>
                                     <td><?php echo $item->qty; ?> </td>
                                     <td><?php
-                                  if($item->price > 0) {
-
-                                      echo $item->price / $item->qty; 
-                                  }
-                                     
-                                     ?> </td>
+                                    if ($item->price > 0) {
+                                        echo $item->price / $item->qty;
+                                    }
+                                    
+                                    ?> </td>
                                     <td><?php echo $item->price; ?> </td>
                                     {{-- <td><?php echo $item->created_at; ?> </td> --}}
                                 </tr>
@@ -152,4 +152,9 @@
             $('#delete_modal').modal('show');
         });
     </script>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="https://cdn.rawgit.com/harvesthq/chosen/gh-pages/chosen.jquery.min.js"></script>
+    <link href="https://cdn.rawgit.com/harvesthq/chosen/gh-pages/chosen.min.css" rel="stylesheet" />
+
 @stop
