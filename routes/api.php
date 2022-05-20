@@ -9,7 +9,10 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UnitPriceController;
 use App\Models\Device;
+use App\Models\OrderDetails;
+use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 // use App\Http\Controllers\Voyager\OrderController;
 /*
@@ -39,9 +42,30 @@ Route::get('/get-pdf/{id}', [OrderController::class, 'createPDF']);
 
 // Route::post('/login',[LoginController::class,'login'] );
 
+Route::get('/update', function (Request $request) {
+
+    $orderDetails = OrderDetails::groupBy('product_id')
+        ->whereNotNull('product_id')
+        ->selectRaw('*, sum(qty) as total_qty')
+        ->get();
+
+
+
+    foreach ($orderDetails as $key => $value) {
+        $obj = new stdClass();
+        $obj->product_id = $value->product_id;
+        $obj->qty = $value->qty;
+        $obj->total_qty = $value->total_qty;
+        $product =   Product::find($value->product_id);
+        $product->number_orders = $value->total_qty;
+        $product->save();
+        $result[] = $obj;
+    }
+    return $result;
+});
 Route::middleware('auth:api')->get('/user', function (Request $request) {
-    
-       Device::UpdateOrCreate(
+
+    Device::UpdateOrCreate(
         [
             "user_id" => $request->user()->id,
         ],

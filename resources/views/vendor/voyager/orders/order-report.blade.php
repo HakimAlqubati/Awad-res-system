@@ -43,7 +43,7 @@
             </div>
 
 
-            <div class="form-group">
+            {{-- <div class="form-group">
                 <label for="status">Unit:</label>
                 <select class="form-control" name="unit_id" id="unit_id">
 
@@ -52,7 +52,7 @@
                         <option value="{{ $item->id }}"> {{ $item->name }} </option>
                     @endforeach
                 </select>
-            </div>
+            </div> --}}
 
             <div class="form-group">
                 <label for="status"> From date:</label>

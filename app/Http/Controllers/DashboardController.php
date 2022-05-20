@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Branch;
 use App\Models\Order;
 use App\Models\Product;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -18,21 +20,43 @@ class DashboardController extends Controller
 
 
         $firstChart = Product::skip(0)->take(10)->orderBy('number_orders', 'DESC')->get();
+        $finalDataFirstChar = [];
         foreach ($firstChart as $key => $value) {
             $finalDataFirstChart[] = [
                 'label' => $value->name, 'y' => $value->number_orders
             ];
         }
         // -----------
+        $startMonth = '2022-5-1';
+        $lastMonth = '2022-5-31';
+        $month = 'May';
+        if ($request->month && $request->month != null) {
+
+            $month = $request->month;
+
+            $startMonth = date('Y-m-d', strtotime('first day of ' . $request->month . ' 2022'));
+            $lastMonth = date('Y-m-d', strtotime('last day of ' . $request->month . ' 2022'));
+        }
 
 
-        $secondChart = Product::skip(0)->take(10)->orderBy('number_orders', 'DESC')->get();
+        $secondChart = DB::select("
+        select order_details.product_id, products.name as p_name, order_details.qty,  sum(order_details.qty) as total_qty from order_details
+
+        inner join orders on orders.id = order_details.order_id and orders.created_at BETWEEN '" . $startMonth . "' and '" . $lastMonth . "'
+        inner join products on products.id = order_details.product_id
+
+        GROUP BY order_details.product_id 
+        ORDER BY total_qty DESC
+        LIMIT 10 OFFSET 0
+        ");
+        $finalDataSecondChart = [];
         foreach ($secondChart as $key => $value) {
             $finalDataSecondChart[] = [
-                'y' => $value->number_orders, 'label' => $value->name
+                'y' => $value->total_qty, 'label' => $value->p_name
             ];
         }
-        // ----------
+        // ---------- 
+
 
         $ordersCount = Order::get()->count();
 
@@ -47,11 +71,35 @@ class DashboardController extends Controller
             ];
         }
 
+        // -----------
+
+
+        $fordChart = DB::select("
+            select orders.branch_id, branches.name, order_details.price,  sum(order_details.price) as total_price from order_details
+
+            inner join orders on orders.id = order_details.order_id 
+            inner join branches on branches.id = orders.branch_id
+            
+            GROUP BY orders.branch_id 
+            ORDER BY total_price DESC
+            
+            ");
+
+        foreach ($fordChart as $key => $value) {
+            $finalDataFordChart[] = [
+                'y' => $value->total_price, 'label' => $value->name
+            ];
+        }
+        // ---------- 
+
+
         return view('dashboard.index', compact(
             'finalDataFirstChart',
             'finalDataSecondChart',
             'finalDataThirdChart',
-            'ordersCount'
+            'finalDataFordChart',
+            'ordersCount',
+            'month'
         ));
     }
 }
