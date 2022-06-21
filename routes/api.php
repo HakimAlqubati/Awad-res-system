@@ -11,6 +11,7 @@ use App\Http\Controllers\UnitPriceController;
 use App\Models\Device;
 use App\Models\OrderDetails;
 use App\Models\Product;
+use App\Models\UnitPrice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
@@ -42,26 +43,15 @@ Route::get('/get-pdf/{id}', [OrderController::class, 'createPDF']);
 
 // Route::post('/login',[LoginController::class,'login'] );
 
-Route::get('/update', function (Request $request) {
-
-    $orderDetails = OrderDetails::groupBy('product_id')
-        ->whereNotNull('product_id')
-        ->selectRaw('*, sum(qty) as total_qty')
-        ->get();
-
-
-
+Route::get('/update', function () {
+    $orderDetails = OrderDetails::get();
     foreach ($orderDetails as $key => $value) {
-        $obj = new stdClass();
-        $obj->product_id = $value->product_id;
-        $obj->qty = $value->qty;
-        $obj->total_qty = $value->total_qty;
-        $product =   Product::find($value->product_id);
-        $product->number_orders = $value->total_qty;
-        $product->save();
-        $result[] = $obj;
+        if ($value->product_unit_id && $value->product_id) {
+            $qty = $value->qty;
+            $price = UnitPrice::where('product_id', $value->product_id)->where('unit_id', $value->product_unit_id)->first()->price;
+            OrderDetails::where('id', $value->id)->where('product_id', $value->product_id)->where('product_unit_id', $value->product_unit_id)->update(['price' =>   $qty * $price]);
+        }
     }
-    return $result;
 });
 Route::middleware('auth:api')->get('/user', function (Request $request) {
 

@@ -77,10 +77,11 @@ class OrderExport implements FromView
         // dd($finalResult);
 
         return view(
-            'vendor.voyager.orders.export_excel',
-            [
-                'finalResult' => $finalResult
-            ]
+            'vendor.voyager.orders.export_excel'
+            // ,
+            // [
+            //     'finalResult' => $finalResult
+            // ]
         );
     }
 

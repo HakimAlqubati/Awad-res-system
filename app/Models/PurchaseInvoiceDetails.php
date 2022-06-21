@@ -8,4 +8,12 @@ use Illuminate\Database\Eloquent\Model;
 class PurchaseInvoiceDetails extends Model
 {
     use HasFactory;
+
+    protected $fillable = [
+        'created_at',
+        'updated_at'
+    ];
+
+    public $timestamps = true;
+
 }

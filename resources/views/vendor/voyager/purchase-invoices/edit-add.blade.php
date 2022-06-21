@@ -3,10 +3,64 @@ $edit = !is_null($dataTypeContent->getKey());
 $add = is_null($dataTypeContent->getKey());
 @endphp
 
+
+
 @extends('voyager::master')
 
 @section('css')
     <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <style>
+        .fixed_header {
+
+            table-layout: fixed;
+            border-collapse: collapse;
+        }
+
+        .fixed_header tbody {
+            display: block;
+            width: 100%;
+            overflow: auto;
+            height: 200px;
+        }
+
+        .fixed_header thead tr {
+            display: block;
+        }
+
+        .fixed_header thead {
+            background: black;
+            color: #fff;
+        }
+
+        .fixed_header th,
+        .fixed_header td {
+            width: 200px;
+        }
+
+        /* .fixed_header { */
+        ::-webkit-scrollbar {
+            width: 15px;
+        }
+
+        /* Track */
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        /* Handle */
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+        }
+
+        /* Handle on hover */
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* } */
+    </style>
+
 @stop
 
 @section('page_title', __('voyager::generic.' . ($edit ? 'edit' : 'add')) . ' ' .
@@ -15,7 +69,7 @@ $add = is_null($dataTypeContent->getKey());
 @section('page_header')
     <h1 class="page-title">
         <i class="{{ $dataType->icon }}"></i>
-        {{ __('voyager::generic.' . ($edit ? 'edit' : 'add')) .' ' .$dataType->getTranslatedAttribute('display_name_singular') }}
+        {{ __('voyager::generic.' . ($edit ? 'edit' : 'add')) . ' ' . $dataType->getTranslatedAttribute('display_name_singular') }}
     </h1>
     @include('voyager::multilingual.language-selector')
 @stop
@@ -102,14 +156,14 @@ $add = is_null($dataTypeContent->getKey());
                                     <tr>
                                         <td colspan="8">
 
-                                            <textarea class="form-control" name="notes" id="" rows="4" style="width: 100%"
+                                            <textarea rows="1" class="form-control" name="notes" id="" rows="4" style="width: 100%"
                                                 placeholder="Write some notes here..."></textarea>
                                         </td>
                                     </tr>
 
                             </table>
 
-                            <table class="table table-striped" id="table-details" cellspacing="0">
+                            <table class="table table-striped fixed_header" id="table-details" cellspacing="0">
 
                                 <thead>
                                     <tr>
@@ -120,37 +174,40 @@ $add = is_null($dataTypeContent->getKey());
                                         <th> <label style="font-weight: bold">Total </label></th>
                                         <th> <label style="font-weight: bold">Notes </label></th>
                                         <th> <label style="font-weight: bold">Discount </label></th>
+                                        {{-- <th> </th>
+                                        <th> </th> --}}
                                     </tr>
                                 </thead>
- 
+
                                 <tbody>
-                                    @for ($i = 0; $i < 30; $i++)
+                                    @for ($i = 0; $i < 50; $i++)
                                         <tr class="row_unit" id="row_unit">
 
                                             <td>
                                                 <input autocomplete="off" type="text" id="product{{ $i }}"
                                                     name="product[]" placeholder="Search product"
-                                                    class="form-control product" />
+                                                    class="form-control product" {{$i == 0 ? 'required': ''}}/>
                                             </td>
 
                                             <td>
-                                                <input autocomplete="off" class="form-control" type="text" id="qty"
-                                                    name="qty[]" id="">
+                                                <input autocomplete="off" class="form-control" type="number" id="qty"
+                                                    name="qty[]" id=""  {{$i == 0 ? 'required': ''}}>
                                             </td>
 
                                             <td>
                                                 <input autocomplete="off" type="text" id="unit{{ $i }}"
-                                                    name="unit[]" placeholder="Search unit" class="form-control unit" />
+                                                    name="unit[]" placeholder="Search unit" class="form-control unit"
+                                                     {{$i == 0 ? 'required': ''}} />
                                             </td>
 
                                             <td>
-                                                <input autocomplete="off" class="form-control" type="text" id="price"
-                                                    name="price[]" id="">
+                                                <input autocomplete="off" class="form-control" type="number" id="price"
+                                                    name="price[]" id=""  {{$i == 0 ? 'required': ''}}>
                                             </td>
 
                                             <td>
                                                 <input autocomplete="off" class="form-control" type="text" id="total"
-                                                    value="0" name="total[]" id="">
+                                                    value="0" name="total[]" id="" readonly>
                                             </td>
 
                                             <td>
@@ -160,8 +217,25 @@ $add = is_null($dataTypeContent->getKey());
 
                                             <td>
                                                 <input autocomplete="off" class="form-control" type="text"
-                                                    name="discount[]" id="">
+                                                    name="discount[]" id="" value="0">
                                             </td>
+
+
+
+                                            {{-- <td>
+                                            <a id="create-one"
+                                                style="font-size: 30px; font-weight: bold; text-decoration: none;">
+                                                +
+                                            </a>
+                                        </td>
+
+                                        <td>
+
+                                            <a id="remove" class="remove"
+                                                style="font-size: 30px; font-weight: bold; text-decoration: none;">
+                                                -
+                                            </a>
+                                        </td> --}}
 
                                         </tr>
                                     @endfor
@@ -211,18 +285,22 @@ $add = is_null($dataTypeContent->getKey());
     <!-- End Delete File Modal -->
 @stop
 @section('javascript')
+
+
     <script>
         $(function() {
             // $('#addMore').on('click', function() {
             //     var data = $("#my-table tr:eq(3)").clone(true).appendTo("#my-table");
             //     data.find("input").val('');
             // });
+
+
             $(document).on('click', '#create-one', function() {
                 var trIndex = $(this).closest("tr").index();
 
                 var trHtml = $(this).closest("tr").html()
 
-                $("<tr class='row_unit'  >" + trHtml + "</tr>").insertAfter("#row_unit");
+                $("<tr class='row_unit'  >" + trHtml + "</tr>").insertAfter(".row_unit:last");
             });
 
             $(document).on('click', '.remove', function() {
@@ -243,10 +321,14 @@ $add = is_null($dataTypeContent->getKey());
             var routeautocompleteUnit = "{{ url('autocomplete-unit') }}";
 
 
-            for (let index = 0; index < 30; index++) {
+
+            for (let index = 0; index < 50; index++) {
 
                 // for product
+
+
                 $('#product' + index).typeahead({
+
                     source: function(query, process) {
                         return $.get(routeautocompleteProduct, {
                             query: query
@@ -331,9 +413,6 @@ $add = is_null($dataTypeContent->getKey());
 
 
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-3-typeahead/4.0.1/bootstrap3-typeahead.min.js">
-    
-    </script>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-3-typeahead/4.0.1/bootstrap3-typeahead.min.js"></script>
 
 @stop

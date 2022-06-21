@@ -64,7 +64,7 @@ class OrderController extends  VoyagerBaseController
         left join units on (order_details.product_unit_id = units.id)
          ";
 
-        $strSelect .= "where orders.active =1";
+        $strSelect .= "where orders.active =1 and order_details.available_in_store = 1";
 
         if ($request->branch_id && $request->branch_id != null) {
             $strSelect .= " and  orders.branch_id = " . $request->branch_id;
@@ -112,7 +112,7 @@ class OrderController extends  VoyagerBaseController
 
 
         $strSelect .= " ORDER BY id DESC
-        limit 100";
+        ";
 
         if ($request->branch_id && $request->branch_id != null) {
             $data = DB::select($strSelect);

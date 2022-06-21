@@ -10,6 +10,7 @@ use App\Models\Stock;
 use App\Models\Unit;
 use App\Models\UnitPrice;
 use App\Models\User;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Http\Request;
@@ -595,10 +596,7 @@ class PurchaseInvoiceController extends VoyagerBaseController
     {
 
 
-
-        // dd($request->all());
-
-
+ 
 
         $purchaseInvoice = new PurchaseInvoice(
             [
@@ -637,6 +635,8 @@ class PurchaseInvoiceController extends VoyagerBaseController
                 $obj->notes = $notes;
                 $obj->discount = $discount;
 
+                $obj->created_at = Carbon::now();
+                $obj->updated_at = Carbon::now();
 
                 $obj->purchase_invoice_id   = $purchaseInvoice->id;
 

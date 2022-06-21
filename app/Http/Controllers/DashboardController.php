@@ -40,7 +40,15 @@ class DashboardController extends Controller
 
 
         $secondChart = DB::select("
-        select order_details.product_id, products.name as p_name, order_details.qty,  sum(order_details.qty) as total_qty from order_details
+        select order_details.product_id, products.name as p_name, order_details.qty,
+
+        case when  order_details.product_unit_id = 2
+        then  sum(order_details.qty)  * 10
+        else  sum(order_details.qty) 
+        end as total_qty 
+        
+        
+        from order_details
 
         inner join orders on orders.id = order_details.order_id and orders.created_at BETWEEN '" . $startMonth . "' and '" . $lastMonth . "'
         inner join products on products.id = order_details.product_id
