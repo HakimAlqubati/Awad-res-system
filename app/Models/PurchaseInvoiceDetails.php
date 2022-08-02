@@ -11,7 +11,10 @@ class PurchaseInvoiceDetails extends Model
 
     protected $fillable = [
         'created_at',
-        'updated_at'
+        'updated_at',
+        'unit_id',
+        'product_id',
+        'ordered_qty',
     ];
 
     public $timestamps = true;

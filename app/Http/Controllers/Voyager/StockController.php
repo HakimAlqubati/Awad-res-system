@@ -42,13 +42,14 @@ class StockController extends VoyagerBaseController
         products.name as product_name,
         purchase_invoice_details.unit_id,
         units.name as unit_name,
-
-    --    case when order_details.qty IS not NULL or order_details.qty != ''
-    --       then sum(purchase_invoice_details.qty)  - sum(order_details.qty)
-    --        else sum(purchase_invoice_details.qty) 
-    --    end as qty ,
-        sum(purchase_invoice_details.qty) as qty,
-
+        sum(purchase_invoice_details.qty) as pur_qty,
+        sum(order_details.qty) as or_qty,
+        order_details.qty as or2_qty,
+        case when order_details.qty IS not NULL or order_details.qty != ''
+           then sum(purchase_invoice_details.qty)  - sum(order_details.qty)
+           else sum(purchase_invoice_details.qty) 
+        end as qty ,
+        -- sum(purchase_invoice_details.qty) as qty,
         purchase_invoice_details.price
         from
         purchase_invoices
@@ -61,14 +62,12 @@ class StockController extends VoyagerBaseController
         left join users on (users.id = purchase_invoices.supplier_id)
         left join units on (units.id = purchase_invoice_details.unit_id)
         left join stocks on (stocks.id = purchase_invoices.stock_id)
-      --  left join order_details on (
-      --     (
-      --          order_details.product_id = purchase_invoice_details.product_id
-      --      )
-      --      and (
-      --          order_details.product_unit_id = purchase_invoice_details.unit_id
-      --      )
-      --  )
+        left join order_details on
+        (
+           (order_details.product_id = purchase_invoice_details.product_id)
+            and 
+           (order_details.product_unit_id = purchase_invoice_details.unit_id)
+        )
      
          ";
 
@@ -95,16 +94,16 @@ class StockController extends VoyagerBaseController
 
 
         $strSelect .= " group by
-        purchase_invoice_details.product_id,
-        purchase_invoice_details.unit_id
-       -- order_details.product_unit_id,
-       -- order_details.product_id"
+        purchase_invoice_details.product_id
+        , purchase_invoice_details.unit_id
+        ,  order_details.product_unit_id
+        , order_details.product_id"
         ;
 
         // dd($strSelect);
         $data = DB::select($strSelect);
 
-        // dd($data);
+        dd($data);
        
         $stocks = Stock::get();
 

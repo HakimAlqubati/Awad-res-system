@@ -20,7 +20,7 @@
 
             <div class="form-group">
                 <label for="status">Branch:</label>
-                <select class="form-control" name="branch_id" id="branch_id">
+                <select class="form-control" name="branch_id[]" id="branch_id" multiple>
 
                     <option value="">-Choose-</option>
                     @foreach ($branches as $item)

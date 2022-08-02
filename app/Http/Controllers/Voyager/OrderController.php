@@ -67,7 +67,8 @@ class OrderController extends  VoyagerBaseController
         $strSelect .= "where orders.active =1 and order_details.available_in_store = 1";
 
         if ($request->branch_id && $request->branch_id != null) {
-            $strSelect .= " and  orders.branch_id = " . $request->branch_id;
+            // $strSelect .= " and  orders.branch_id = " . $request->branch_id;
+            $strSelect .= " and  orders.branch_id in ( " .  implode(',', $request->branch_id) . " ) ";
         }
 
 
@@ -561,19 +562,12 @@ class OrderController extends  VoyagerBaseController
     // POST BR(E)AD
     public function update(Request $request, $id)
     {
-
-
-
-
         $order = Order::find($id);
-
-
         if ($request->user()->role_id != 5) {
             $order->request_state_id =    $request->request_state_id;
         }
 
         $order->restricted_state_id =    $request->restricted_state_id;
-
 
         foreach ($request->order_detail_id as $key => $value) {
             $order_detail = $request->order_detail_id[$key];

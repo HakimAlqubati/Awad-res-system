@@ -93,6 +93,7 @@ class DashboardController extends Controller
             
             ");
 
+        $finalDataFordChart = [];
         foreach ($fordChart as $key => $value) {
             $finalDataFordChart[] = [
                 'y' => $value->total_price, 'label' => $value->name

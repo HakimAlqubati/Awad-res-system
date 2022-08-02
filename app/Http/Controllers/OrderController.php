@@ -8,6 +8,7 @@ use App\Models\NotificationOrder;
 use App\Models\Order;
 use App\Models\OrderDetails;
 use App\Models\Product;
+use App\Models\PurchaseInvoiceDetails;
 use App\Models\RequestState;
 use App\Models\UnitPrice;
 use App\Models\User;
@@ -18,6 +19,7 @@ use Illuminate\Support\Facades\Storage;
 use stdClass;
 use PDF;
 use App\Models\Unit;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 
@@ -277,12 +279,17 @@ class OrderController extends Controller
                         $request->orderDetails = array();
                     }
 
+
                     $all_products = $this->addOrderDetails(
                         $request->orderDetails,
                         $request->productsNotFound,
                         $pendingApprovalOrder->id,
                         $currentUser->id
                     );
+
+                    foreach ($request->orderDetails as  $valueOrderDetail) {
+                        $this->getOrderDetaisPendingToDelete($pendingApprovalOrder->id, $valueOrderDetail['product_unit_id'], $valueOrderDetail['product_id']);
+                    }
 
                     OrderDetails::insert($all_products);
 
@@ -326,12 +333,18 @@ class OrderController extends Controller
 
 
 
+                    // dd(Auth::user()->id, $pendingApprovalOrder->id, $request->orderDetails);
+
                     $all_products = $this->addOrderDetails(
                         $request->orderDetails,
                         $request->productsNotFound,
                         $pendingApprovalOrder->id,
                         $currentUser->id
                     );
+
+                    foreach ($request->orderDetails as  $valueOrderDetail) {
+                        $this->getOrderDetaisPendingToDelete($pendingApprovalOrder->id, $valueOrderDetail['product_unit_id'], $valueOrderDetail['product_id']);
+                    }
 
                     OrderDetails::insert($all_products);
 
@@ -396,6 +409,39 @@ class OrderController extends Controller
         )->first();
     }
 
+    public function getProductUnitPricePurchaseInvoice($product_id, $unit_id)
+    {
+        $data = PurchaseInvoiceDetails::orderBy('id', 'ASC')->where(
+            [
+                [
+                    'product_id', '=', $product_id
+                ],
+                [
+                    'unit_id', '=', $unit_id
+                ]
+            ]
+        )->get();
+
+        $result = [];
+
+        foreach ($data as $key => $value) {
+            $orderDetailsQty = OrderDetails::where('product_id', $product_id)->where('product_unit_id', $unit_id)->where('purchase_invoice_id', $value->id)->first()->sum('qty');
+            $purchaseQty = $value->qty;
+            if ($orderDetailsQty < $purchaseQty) {
+                $result = [
+                    'price' => $value->price,
+                    'purchase_invoice_id' => $value->id
+                ];
+                break;
+            }
+            if ($orderDetailsQty >= $purchaseQty) {
+                continue;
+            }
+        }
+       
+        return $result;
+    }
+
 
 
     public function getOrderDetailsToDelete($order_id)
@@ -404,6 +450,14 @@ class OrderController extends Controller
         return OrderDetails::where('order_id', $order_id)->get();
     }
 
+    public function getOrderDetaisPendingToDelete($order_id, $unit_id, $product_id)
+    {
+        $orderDetail = OrderDetails::where('order_id', $order_id)->where('product_unit_id', $unit_id)->where('product_id', $product_id)->first();
+        if ($orderDetail != null) {
+            $orderDetail->delete();
+        }
+        // return OrderDetails::where('order_id', $order_id)->where('product_unit_id', $unit_id)->where('product_id', $product_id)->get();
+    }
 
     public function addOrder($orderState, $desc, $createdBy, $branchId)
     {
@@ -433,56 +487,50 @@ class OrderController extends Controller
     public function addOrderDetails(array $orderDetails, array $productsNotFound, $orderId, $currentUser)
     {
 
-
         $productsNotFoundResult =   array();
         foreach ($productsNotFound as   $data) {
-
             $obj = new stdClass();
-
             $obj->product_id = null;
             $obj->product_unit_id = null;
             $obj->price = null;
-
             $obj->qty = $data['qty'];
             $obj->available_qty = $data['qty'];
             $obj->product_name = $data['product_name'];
             $obj->order_id = $orderId;
-
-
-
             $obj->created_by =  $currentUser;
             $productsNotFoundResult[] = $obj;
         }
 
 
-
-
         foreach ($orderDetails as   $data) {
 
-
-
-            $unitPrice = $this->getUnitPriceData($data['product_id'], $data['product_unit_id']);
-
-            $resultPrice = $unitPrice->price;
+            $productUnitPricePurchaseInvoice = PurchaseInvoiceDetails::orderBy('id', 'DESC')->where('product_id', $data['product_id'])->where('unit_id', $data['product_unit_id'])->get();
 
 
 
+            $purchasePrice = 0;
+            foreach ($productUnitPricePurchaseInvoice as $key => $value) {
+                $purchasePrice += $value->price;
+                if ($key > 1)
+                    break;
+            }
+          
+
+            $resultPrice = round($purchasePrice / 3, 2);
+            $purchaseInvoiceId = $productUnitPricePurchaseInvoice->id;
             $obj = new stdClass();
-
             $obj->product_id = $data['product_id'];
             $obj->product_unit_id =  $data['product_unit_id'];
             $obj->qty = $data['qty'];
             $obj->available_qty = $data['qty'];
-
             $obj->order_id = $orderId;
-
             $obj->price = $resultPrice  * $data['qty'];
             $obj->product_name = null;
             $obj->created_by = $currentUser;
+            $obj->purchase_invoice_id = $purchaseInvoiceId;
 
             // to update orders quqntity in products
             $productData = Product::where('id', $data['product_id'])->first();
-
             $number_orders = $productData->number_orders;
             $productData->number_orders = $number_orders + $data['qty'];
             $productData->save();
@@ -491,13 +539,12 @@ class OrderController extends Controller
             $answers[] = $obj;
         }
 
+        // dd($answers);
 
 
         if (count($orderDetails) == 0) {
             $answers = array();
         }
-
-
 
         $productsNotFoundResult = json_decode(json_encode($productsNotFoundResult), true);
 
