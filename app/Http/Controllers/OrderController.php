@@ -409,38 +409,7 @@ class OrderController extends Controller
         )->first();
     }
 
-    public function getProductUnitPricePurchaseInvoice($product_id, $unit_id)
-    {
-        $data = PurchaseInvoiceDetails::orderBy('id', 'ASC')->where(
-            [
-                [
-                    'product_id', '=', $product_id
-                ],
-                [
-                    'unit_id', '=', $unit_id
-                ]
-            ]
-        )->get();
-
-        $result = [];
-
-        foreach ($data as $key => $value) {
-            $orderDetailsQty = OrderDetails::where('product_id', $product_id)->where('product_unit_id', $unit_id)->where('purchase_invoice_id', $value->id)->first()->sum('qty');
-            $purchaseQty = $value->qty;
-            if ($orderDetailsQty < $purchaseQty) {
-                $result = [
-                    'price' => $value->price,
-                    'purchase_invoice_id' => $value->id
-                ];
-                break;
-            }
-            if ($orderDetailsQty >= $purchaseQty) {
-                continue;
-            }
-        }
-       
-        return $result;
-    }
+  
 
 
 
@@ -517,7 +486,7 @@ class OrderController extends Controller
           
 
             $resultPrice = round($purchasePrice / 3, 2);
-            $purchaseInvoiceId = $productUnitPricePurchaseInvoice->id;
+            // $purchaseInvoiceId = $productUnitPricePurchaseInvoice->id;
             $obj = new stdClass();
             $obj->product_id = $data['product_id'];
             $obj->product_unit_id =  $data['product_unit_id'];
@@ -527,7 +496,7 @@ class OrderController extends Controller
             $obj->price = $resultPrice  * $data['qty'];
             $obj->product_name = null;
             $obj->created_by = $currentUser;
-            $obj->purchase_invoice_id = $purchaseInvoiceId;
+            
 
             // to update orders quqntity in products
             $productData = Product::where('id', $data['product_id'])->first();

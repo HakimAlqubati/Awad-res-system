@@ -33,6 +33,7 @@ class StockController extends VoyagerBaseController
     public function getReport(Request $request)
     {
 
+       
         $strSelect = "select
         purchase_invoices.supplier_id,
         users.name as supplier_name,
@@ -103,7 +104,7 @@ class StockController extends VoyagerBaseController
         // dd($strSelect);
         $data = DB::select($strSelect);
 
-        dd($data);
+        // dd($data);
        
         $stocks = Stock::get();
 
