@@ -409,7 +409,7 @@ class OrderController extends Controller
         )->first();
     }
 
-  
+
 
 
 
@@ -473,30 +473,113 @@ class OrderController extends Controller
 
         foreach ($orderDetails as   $data) {
 
-            $productUnitPricePurchaseInvoice = PurchaseInvoiceDetails::orderBy('id', 'DESC')->where('product_id', $data['product_id'])->where('unit_id', $data['product_unit_id'])->get();
+            $productUnitPricePurchaseInvoice = PurchaseInvoiceDetails::orderBy('id', 'ASC')->where('product_id', $data['product_id'])->where('unit_id', $data['product_unit_id'])->get();
 
 
-
-            $purchasePrice = 0;
+            $resultPurchase = new stdClass();
+            $alreadyQuantityOrder = $data['qty'];
             foreach ($productUnitPricePurchaseInvoice as $key => $value) {
-                $purchasePrice += $value->price;
-                if ($key > 1)
-                    break;
-            }
-          
 
-            $resultPrice = round($purchasePrice / 3, 2);
-            // $purchaseInvoiceId = $productUnitPricePurchaseInvoice->id;
-            $obj = new stdClass();
-            $obj->product_id = $data['product_id'];
-            $obj->product_unit_id =  $data['product_unit_id'];
-            $obj->qty = $data['qty'];
-            $obj->available_qty = $data['qty'];
-            $obj->order_id = $orderId;
-            $obj->price = $resultPrice  * $data['qty'];
-            $obj->product_name = null;
-            $obj->created_by = $currentUser;
-            
+                $resultPurchase->purchase_invoice_id = $value->purchase_invoice_id;
+
+                $purchaseInvoiceData = PurchaseInvoiceDetails::find($value->id);
+                $existing_ordered_qty = $purchaseInvoiceData->ordered_qty;
+
+
+                if (($value->ordered_qty < $value->qty)) {
+
+                    if (($existing_ordered_qty + $alreadyQuantityOrder) <= $value->qty) {
+
+                        // dd('1');
+                        $resultPurchase->price = $value->price;
+                        $purchaseInvoiceData->ordered_qty = $existing_ordered_qty + $alreadyQuantityOrder;
+                        $purchaseInvoiceData->save();
+
+                        $resultPrice = $resultPurchase->price;
+                        $purchaseInvoiceId = $resultPurchase->purchase_invoice_id;
+                        $obj = new stdClass();
+                        $obj->product_id = $data['product_id'];
+                        $obj->product_unit_id =  $data['product_unit_id'];
+
+                        if ($existing_ordered_qty > 0) {
+                            $obj->qty = $purchaseInvoiceData->qty  - $existing_ordered_qty;
+                            $obj->available_qty = $purchaseInvoiceData->qty  - $existing_ordered_qty;
+                            $obj->price = $resultPrice  * ($purchaseInvoiceData->qty  - $existing_ordered_qty);
+                        } else {
+                            $obj->qty = $existing_ordered_qty + $alreadyQuantityOrder;
+                            $obj->available_qty = $existing_ordered_qty + $alreadyQuantityOrder;
+                            $obj->price = $resultPrice  * ($existing_ordered_qty + $alreadyQuantityOrder);
+                        }
+
+                        $obj->order_id = $orderId;
+                        $obj->product_name = null;
+                        $obj->created_by = $currentUser;
+                        $obj->purchase_invoice_id = $purchaseInvoiceId;
+                        $answers[] = $obj;
+
+                        break;
+                    }
+                    if (($existing_ordered_qty + $alreadyQuantityOrder) > $value->qty) {
+
+
+                        // dd('2');
+                        $resultPurchase->price = $value->price;
+                        $purchaseInvoiceData->ordered_qty = $existing_ordered_qty + ($value->qty - $value->ordered_qty);
+                        $alreadyQuantityOrder = $alreadyQuantityOrder - ($value->qty - $existing_ordered_qty);
+
+                        $purchaseInvoiceData->save();
+                        $resultPrice = $resultPurchase->price;
+                        $purchaseInvoiceId = $resultPurchase->purchase_invoice_id;
+                        $obj = new stdClass();
+                        $obj->product_id = $data['product_id'];
+                        $obj->product_unit_id =  $data['product_unit_id'];
+
+
+                        if ($existing_ordered_qty > 0) {
+                            $obj->qty =  ($value->qty - $value->ordered_qty); 
+                            $obj->available_qty =  ($value->qty - $value->ordered_qty);
+                            $obj->price = $resultPrice  * (($value->qty - $value->ordered_qty));
+                        } else { 
+                            $obj->qty = $existing_ordered_qty + ($value->qty - $value->ordered_qty);
+                            $obj->available_qty = $existing_ordered_qty + ($value->qty - $value->ordered_qty);
+                            $obj->price = $resultPrice  * ($existing_ordered_qty + ($value->qty - $value->ordered_qty));
+                        }
+
+
+                        $obj->order_id = $orderId;
+                        $obj->product_name = null;
+                        $obj->created_by = $currentUser;
+                        $obj->purchase_invoice_id = $purchaseInvoiceId;
+                        $answers[] = $obj;
+
+                        continue;
+                    }
+                }
+                // else {
+                //     $resultPurchase->price = PurchaseInvoiceDetails::orderBy('id', 'ASC')->where('product_id', $data['product_id'])->where('unit_id', $data['product_unit_id'])->get()->last()->price;
+
+                //     $purchaseInvoiceData->ordered_qty = $existing_ordered_qty + ($value->qty - $value->ordered_qty);
+                //     $alreadyQuantityOrder = $alreadyQuantityOrder - ($value->qty - $existing_ordered_qty);
+
+                //     $purchaseInvoiceData->save();
+                //     $resultPrice = $resultPurchase->price;
+                //     $purchaseInvoiceId = $resultPurchase->purchase_invoice_id;
+                //     $obj = new stdClass();
+                //     $obj->product_id = $data['product_id'];
+                //     $obj->product_unit_id =  $data['product_unit_id'];
+                //     $obj->qty = $data['qty'];
+                //     $obj->available_qty = $data['qty'];
+                //     $obj->order_id = $orderId;
+                //     $obj->price = $resultPrice  * $data['qty'];
+                //     $obj->product_name = null;
+                //     $obj->created_by = $currentUser;
+                //     $obj->purchase_invoice_id = $purchaseInvoiceId;
+                //     $answers[] = $obj;
+                //     break;
+                // }
+            }
+
+
 
             // to update orders quqntity in products
             $productData = Product::where('id', $data['product_id'])->first();
@@ -505,12 +588,8 @@ class OrderController extends Controller
             $productData->save();
             // -------
 
-            $answers[] = $obj;
-        }
 
-        // dd($answers);
-
-
+        } 
         if (count($orderDetails) == 0) {
             $answers = array();
         }

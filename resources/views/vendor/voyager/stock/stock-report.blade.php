@@ -112,7 +112,7 @@
                                         <td> {{ $value->product_id }} </td>
                                         <td> {{ $value->product_name }} </td>
                                         <td> {{ $value->unit_name }} </td>
-                                        <td> {{ $value->qty }} </td>
+                                        <td> {{ ($value->qty - $value->ordered_qty) }} </td>
                                         <td> {{ $value->supplier_name }} </td>
 
                                     </tr>

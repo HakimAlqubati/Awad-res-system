@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\OrderDetails;
+use App\Models\PurchaseInvoiceDetails;
 use App\Models\UnitPrice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -94,14 +95,13 @@ class OrderDetailsController extends Controller
             } else {
                 if ($operation == "update") {
                     try {
-
-
-
                         if (($value['qty'] && $value['qty'] != null) || ($value['qty'] == 0)) {
                             $product_id = $orderDetails->product_id;
                             $unit_id = $orderDetails->product_unit_id;
                             if ($product_id != null && $unit_id != null) {
-                                $priceOfUnitProduct = $this->getUnitPriceData($product_id, $unit_id)->price;
+                                // $priceOfUnitProduct = $this->getUnitPriceData($product_id, $unit_id)->price;
+                                $priceOfUnitProduct = PurchaseInvoiceDetails::where('unit_id', $value['product_unit_id'])->where('product_id', $value['product_id'])->first()->price;
+                                // dd($priceOfUnitProduct);
                                 $orderDetails->price = $priceOfUnitProduct * $value['qty'];
                             }
                             $orderDetails->qty = $value['qty'];
@@ -110,7 +110,6 @@ class OrderDetailsController extends Controller
                         if (($value['product_unit_id'] && $value['product_unit_id'] != null) &&
                             ($value['product_id'] && $value['product_id'] != null)
                         ) {
-
                             $unitPriceData = UnitPrice::where(
                                 [
                                     ['product_id', '=', $value['product_id']],
