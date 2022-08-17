@@ -15,6 +15,7 @@ class PurchaseInvoiceDetails extends Model
         'unit_id',
         'product_id',
         'ordered_qty',
+        'available_qty'
     ];
 
     public $timestamps = true;

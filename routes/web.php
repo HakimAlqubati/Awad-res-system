@@ -64,6 +64,7 @@ Route::get('/admin/products-without-units', [ProductController::class, 'getProdu
 
 // for stock report
 Route::get('/admin/stock-report', [StockController::class, 'getReport']);
+Route::get('/admin/stock-report-v2', [StockController::class, 'getReportV2']);
 
 
 Route::group(['prefix' => 'admin'], function () {

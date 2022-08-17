@@ -361,6 +361,9 @@ class OrderController extends  VoyagerBaseController
 
         $order = Order::where('id', $id)->get();
 
+        $finalResultOrder = [];
+        $finalResult = [];
+        
 
         foreach ($order as   $val) {
             $obj = new stdClass();

@@ -215,14 +215,6 @@ class OrderController extends Controller
     {
         return User::where('id', $id)->get();
     }
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-    }
 
     /**
      * Store a newly created resource in storage.
@@ -233,166 +225,228 @@ class OrderController extends Controller
     public function store(Request $request)
     {
 
-        // DB::connection(function() {
+        $result =    DB::transaction(function () use ($request) {
+            $currentRole =  $request->user()->role_id;
+            $currentUser = $request->user();
+            $branch = Branch::where('manager_id', $currentUser->id)->first();
 
-        // }) ;
-        // DB::transaction(function () use($request) {
-        $currentRole =  $request->user()->role_id;
-        $currentUser = $request->user();
-        $branch = Branch::where('manager_id', $currentUser->id)->first();
+            if ($currentRole == 3 &&  !$branch) {
+                $obj = new stdClass();
+                $obj->res = "faild";
+                $obj->msg = "you are not manager for any branch";
+            } elseif ($branch || $currentRole == 3 || $currentRole == 1  || $currentRole == 8) {
+                // $storeManager = User::where('id', 3)->first();
 
-        if ($currentRole == 3 &&  !$branch) {
-            $obj = new stdClass();
-            $obj->res = "faild";
-            $obj->msg = "you are not manager for any branch";
-        } elseif ($branch || $currentRole == 3 || $currentRole == 1  || $currentRole == 8) {
-            // $storeManager = User::where('id', 3)->first();
+                if ($currentRole == 3) {
 
-            if ($currentRole == 3) {
+                    FcmNotificationJob::dispatchNow("New Order", "Order from " . $currentUser->name .
+                        " Manager of branch " .  $branch->name, $branch);
+                    $branchId =  $branch->id;
+                    $orderState = 2;
+                    $createdBy = $request->user()->id;
 
-                FcmNotificationJob::dispatchNow("New Order", "Order from " . $currentUser->name .
-                    " Manager of branch " .  $branch->name, $branch);
-                $branchId =  $branch->id;
-                $orderState = 2;
-                $createdBy = $request->user()->id;
-
-                $pendingApprovalOrder = Order::where(
-                    [
+                    $pendingApprovalOrder = Order::where(
                         [
-                            'request_state_id', '=', 8
-                        ],
-                        [
-                            'created_by', '=', $createdBy
+                            [
+                                'request_state_id', '=', 8
+                            ],
+                            [
+                                'created_by', '=', $createdBy
+                            ]
                         ]
-                    ]
-                )->get()->first();
+                    )->get()->first();
 
 
-                if ($pendingApprovalOrder != null) {
+                    if ($pendingApprovalOrder != null) {
 
 
-                    if ($request->productsNotFound == null) {
-                        $request->productsNotFound = array();
+                        if ($request->productsNotFound == null) {
+                            $request->productsNotFound = array();
+                        }
+
+                        if ($request->orderDetails == null) {
+                            $request->orderDetails = array();
+                        }
+
+
+                        $all_products = $this->addOrderDetails(
+                            $request->orderDetails,
+
+                            $pendingApprovalOrder->id,
+                            $currentUser->id
+                        );
+
+                        $new_products = [];
+                        foreach ($all_products as $valueOrderDetail) {
+                            $data = $this->getOrderDetaisPendingToDelete($pendingApprovalOrder->id, $valueOrderDetail['product_unit_id'], $valueOrderDetail['product_id'], $valueOrderDetail['qty']);
+
+
+                            if (!is_null($data)) {
+                                $new_products[] = [
+                                    'product_id' => $data->product_id,
+                                    'product_unit_id' => $data->product_unit_id,
+                                    'qty' => $data->qty + $valueOrderDetail['qty'],
+                                    'available_qty' =>  $data->qty + $valueOrderDetail['qty'],
+                                    'order_id' => $data->order_id,
+                                    'price' => ($data->qty + $valueOrderDetail['qty']) * $this->getUnitPriceData($data->product_id, $data->product_unit_id)->price,
+                                    'product_name' => null,
+                                    'created_by' => $valueOrderDetail['created_by']
+                                ];
+                            } elseif (is_null($data)) {
+                                $new_products[] = [
+                                    'product_id' => $valueOrderDetail['product_id'],
+                                    'product_unit_id' => $valueOrderDetail['product_unit_id'],
+                                    'qty' =>  $valueOrderDetail['qty'],
+                                    'available_qty' =>  $valueOrderDetail['available_qty'],
+                                    'order_id' => $valueOrderDetail['order_id'],
+                                    'price' => $valueOrderDetail['price'] * $valueOrderDetail['qty'],
+                                    'product_name' => null,
+                                    'created_by' => $valueOrderDetail['created_by']
+                                ];
+                            }
+                        }
+
+
+                        OrderDetails::insert($new_products);
+
+                        $obj = new stdClass();
+                        $obj->res = 'success';
+                        $obj->msg = 'Your Order Submitted Successfully in the order no ' . $pendingApprovalOrder->id;
+                        $obj->yourOrder = $pendingApprovalOrder->with('orderDetails')->where('id', $pendingApprovalOrder->id)->get();
+
+                        return $obj;
                     }
+                } elseif ($currentRole == 8) {
+                    // dd($request);
 
-                    if ($request->orderDetails == null) {
-                        $request->orderDetails = array();
-                    }
+                    $orderState = 8;
+                    $branchId = Branch::where('manager_id', $request->user()->owner_id)->first()->id;
+                    $createdBy = $request->user()->owner_id;
 
-
-                    $all_products = $this->addOrderDetails(
-                        $request->orderDetails,
-                        $request->productsNotFound,
-                        $pendingApprovalOrder->id,
-                        $currentUser->id
-                    );
-
-                    foreach ($request->orderDetails as  $valueOrderDetail) {
-                        $this->getOrderDetaisPendingToDelete($pendingApprovalOrder->id, $valueOrderDetail['product_unit_id'], $valueOrderDetail['product_id']);
-                    }
-
-                    OrderDetails::insert($all_products);
-
-
-                    $obj = new stdClass();
-                    $obj->res = 'success';
-                    $obj->msg = 'Your Order Submitted Successfully in the order no ' . $pendingApprovalOrder->id;
-                    $obj->yourOrder = $pendingApprovalOrder->with('orderDetails')->where('id', $pendingApprovalOrder->id)->get();
-
-                    return $obj;
-                }
-            } elseif ($currentRole == 8) {
-                // dd($request);
-
-                $orderState = 8;
-                $branchId = Branch::where('manager_id', $request->user()->owner_id)->first()->id;
-                $createdBy = $request->user()->owner_id;
-
-                $pendingApprovalOrder = Order::where(
-                    [
+                    $pendingApprovalOrder = Order::where(
                         [
-                            'request_state_id', '=', 8
-                        ],
-                        [
-                            'created_by', '=', $createdBy
+                            [
+                                'request_state_id', '=', 8
+                            ],
+                            [
+                                'created_by', '=', $createdBy
+                            ]
                         ]
-                    ]
-                )->get()->first();
+                    )->get()->first();
 
 
-                if ($pendingApprovalOrder != null) {
+                    if ($pendingApprovalOrder != null) {
 
-                    if ($request->productsNotFound == null) {
-                        $request->productsNotFound = array();
+                        if ($request->productsNotFound == null) {
+                            $request->productsNotFound = array();
+                        }
+
+
+                        if ($request->orderDetails == null) {
+                            $request->orderDetails = array();
+                        }
+
+
+
+                        // dd(Auth::user()->id, $pendingApprovalOrder->id, $request->orderDetails);
+
+                        $all_products = $this->addPendingOrderDetails(
+                            $request->orderDetails,
+                            $pendingApprovalOrder->id,
+                            $currentUser->id
+                        );
+
+                        // dd($all_products);
+                        OrderDetails::insert($all_products);
+
+
+                        // dd($all_products);
+                        // $new_products = [];
+                        // foreach ($all_products as $valueOrderDetail) {
+
+                        //     $data = $this->getOrderDetaisPendingToDelete($pendingApprovalOrder->id, $valueOrderDetail['product_unit_id'], $valueOrderDetail['product_id'], $valueOrderDetail['qty']);
+
+
+
+                        //     if (!is_null($data)) {
+                        //         // dd(
+                        //         //     $data->qty,
+                        //         //     $valueOrderDetail['qty'],
+                        //         //     PurchaseInvoiceDetails::find($data->purchase_invoice_id)->price
+                        //         // );
+                        //         $new_products[] = [
+                        //             'product_id' => $data->product_id,
+                        //             'product_unit_id' => $data->product_unit_id,
+                        //             'qty' => $data->qty + $valueOrderDetail['qty'],
+                        //             'available_qty' =>  $data->qty + $valueOrderDetail['qty'],
+                        //             'order_id' => $data->order_id,
+                        //             'price' => ($data->qty + $valueOrderDetail['qty']) * PurchaseInvoiceDetails::find($data->purchase_invoice_id)->price,
+                        //             'product_name' => null,
+                        //             'created_by' => $valueOrderDetail['created_by']
+                        //         ];
+                        //     } elseif (is_null($data)) {
+                        //         $new_products[] = [
+                        //             'product_id' => $valueOrderDetail['product_id'],
+                        //             'product_unit_id' => $valueOrderDetail['product_unit_id'],
+                        //             'qty' =>  $valueOrderDetail['qty'],
+                        //             'available_qty' =>  $valueOrderDetail['available_qty'],
+                        //             'order_id' => $valueOrderDetail['order_id'],
+                        //             'price' => $valueOrderDetail['price'] * $valueOrderDetail['qty'],
+                        //             'product_name' => null,
+                        //             'created_by' => $valueOrderDetail['created_by']
+                        //         ];
+                        //     }
+                        // }
+
+                        // OrderDetails::insert($new_products);
+
+
+                        $obj = new stdClass();
+                        $obj->res = 'success';
+                        $obj->msg = 'Your Order Submitted Successfully in the order no ' . $pendingApprovalOrder->id;
+                        $obj->yourOrder = $pendingApprovalOrder->with('orderDetails')->where('id', $pendingApprovalOrder->id)->get();
+
+                        return $obj;
                     }
-
-
-                    if ($request->orderDetails == null) {
-                        $request->orderDetails = array();
-                    }
-
-
-
-                    // dd(Auth::user()->id, $pendingApprovalOrder->id, $request->orderDetails);
-
-                    $all_products = $this->addOrderDetails(
-                        $request->orderDetails,
-                        $request->productsNotFound,
-                        $pendingApprovalOrder->id,
-                        $currentUser->id
-                    );
-
-                    foreach ($request->orderDetails as  $valueOrderDetail) {
-                        $this->getOrderDetaisPendingToDelete($pendingApprovalOrder->id, $valueOrderDetail['product_unit_id'], $valueOrderDetail['product_id']);
-                    }
-
-                    OrderDetails::insert($all_products);
-
-
-                    $obj = new stdClass();
-                    $obj->res = 'success';
-                    $obj->msg = 'Your Order Submitted Successfully in the order no ' . $pendingApprovalOrder->id;
-                    $obj->yourOrder = $pendingApprovalOrder->with('orderDetails')->where('id', $pendingApprovalOrder->id)->get();
-
-                    return $obj;
                 }
+
+
+
+
+
+                $order = $this->addOrder($orderState, $request->desc, $createdBy, $branchId);
+
+
+                if ($request->productsNotFound == null) {
+                    $request->productsNotFound = array();
+                }
+                if ($request->orderDetails == null) {
+                    $request->orderDetails = array();
+                }
+
+                // dd(gettype($request->productsNotFound));
+                // dd($order->id);
+                $all_products = $this->addOrderDetails($request->orderDetails,  $order->id, $currentUser->id);
+
+                OrderDetails::insert($all_products);
+
+
+
+                $obj = new stdClass();
+                $obj->res = 'success';
+                $obj->msg = 'Your Order Submitted Successfully';
+                $obj->yourOrder = $order->with('orderDetails')->where('id', $order->id)->get();
+
+                // dd("zzzzzzzzzz");
+                return $obj;
+            } else {
+                $obj = new stdClass();
+                $obj->res = "error";
+                $obj->msg = "you are not authrozied";
             }
-
-
-
-
-
-            $order = $this->addOrder($orderState, $request->desc, $createdBy, $branchId);
-
-
-            if ($request->productsNotFound == null) {
-                $request->productsNotFound = array();
-            }
-            if ($request->orderDetails == null) {
-                $request->orderDetails = array();
-            }
-
-            // dd(gettype($request->productsNotFound));
-            // dd($order->id);
-            $all_products = $this->addOrderDetails($request->orderDetails, $request->productsNotFound, $order->id, $currentUser->id);
-
-            OrderDetails::insert($all_products);
-
-
-            $obj = new stdClass();
-            $obj->res = 'success';
-            $obj->msg = 'Your Order Submitted Successfully';
-            $obj->yourOrder = $order->with('orderDetails')->where('id', $order->id)->get();
-
-            // dd("zzzzzzzzzz");
             return $obj;
-        } else {
-            $obj = new stdClass();
-            $obj->res = "error";
-            $obj->msg = "you are not authrozied";
-        }
-        return $obj;
-        // });
+        });
+        return $result;
     }
 
     public function getUnitPriceData($product_id, $unit_id)
@@ -419,15 +473,26 @@ class OrderController extends Controller
         return OrderDetails::where('order_id', $order_id)->get();
     }
 
-    public function getOrderDetaisPendingToDelete($order_id, $unit_id, $product_id)
+    public function getOrderDetaisPendingToDelete($order_id, $unit_id, $product_id, $qty)
     {
         $orderDetail = OrderDetails::where('order_id', $order_id)->where('product_unit_id', $unit_id)->where('product_id', $product_id)->first();
+
+
+
+        // dd($orderDetail);
+
+        $newDataDetail = null;
         if ($orderDetail != null) {
+            // $orderDetail->qty = $orderDetail->qty + $qty;
+            // $orderDetail->available_qty = $orderDetail->qty;
+            // $orderDetail->save();
+            $newDataDetail = $orderDetail;
+
             $orderDetail->delete();
         }
+        return $newDataDetail;
         // return OrderDetails::where('order_id', $order_id)->where('product_unit_id', $unit_id)->where('product_id', $product_id)->get();
     }
-
     public function addOrder($orderState, $desc, $createdBy, $branchId)
     {
         $order = new Order(
@@ -441,142 +506,77 @@ class OrderController extends Controller
             ]
         );
 
-        // // to update orders quqntity in branches
-        // $branchData = Branch::where('id', $branchId)->first();
-
-        // $number_orders = $branchData->number_orders;
-        // $branchData->number_orders = $number_orders + $data['qty'];
-        // $branchData->save();
-        // // -------
-
         $order->save();
         return $order;
     }
 
-    public function addOrderDetails(array $orderDetails, array $productsNotFound, $orderId, $currentUser)
+    public function addOrderDetails(array $orderDetails, $orderId, $currentUser)
     {
-
-        $productsNotFoundResult =   array();
-        foreach ($productsNotFound as   $data) {
-            $obj = new stdClass();
-            $obj->product_id = null;
-            $obj->product_unit_id = null;
-            $obj->price = null;
-            $obj->qty = $data['qty'];
-            $obj->available_qty = $data['qty'];
-            $obj->product_name = $data['product_name'];
-            $obj->order_id = $orderId;
-            $obj->created_by =  $currentUser;
-            $productsNotFoundResult[] = $obj;
-        }
-
-
         foreach ($orderDetails as   $data) {
 
-            $productUnitPricePurchaseInvoice = PurchaseInvoiceDetails::orderBy('id', 'ASC')->where('product_id', $data['product_id'])->where('unit_id', $data['product_unit_id'])->get();
+            $productPurchaseInvoice = PurchaseInvoiceDetails::orderBy('id', 'ASC')->where('product_id', $data['product_id'])->where('unit_id', $data['product_unit_id'])->get();
+            $productPurchaseInvoiceLatest = PurchaseInvoiceDetails::orderBy('id', 'DESC')->where('product_id', $data['product_id'])->where('unit_id', $data['product_unit_id'])->first();
+
+            $orderDetailsQty = OrderDetails::where('product_unit_id', $data['product_unit_id'])->where('product_id', $data['product_id'])->get()->sum('qty');
 
 
             $resultPurchase = new stdClass();
-            $alreadyQuantityOrder = $data['qty'];
-            foreach ($productUnitPricePurchaseInvoice as $key => $value) {
 
+
+
+            $alreadyQuantityOrder = $data['qty'];
+            foreach ($productPurchaseInvoice as $key => $value) {
                 $resultPurchase->purchase_invoice_id = $value->purchase_invoice_id;
 
-                $purchaseInvoiceData = PurchaseInvoiceDetails::find($value->id);
-                $existing_ordered_qty = $purchaseInvoiceData->ordered_qty;
+
+                if ($value->qty > $orderDetailsQty) {
+
+                    if (($alreadyQuantityOrder + $orderDetailsQty) <= $value->qty) {
 
 
-                if (($value->ordered_qty < $value->qty)) {
-
-                    if (($existing_ordered_qty + $alreadyQuantityOrder) <= $value->qty) {
-
-                        // dd('1');
-                        $resultPurchase->price = $value->price;
-                        $purchaseInvoiceData->ordered_qty = $existing_ordered_qty + $alreadyQuantityOrder;
-                        $purchaseInvoiceData->save();
-
-                        $resultPrice = $resultPurchase->price;
-                        $purchaseInvoiceId = $resultPurchase->purchase_invoice_id;
                         $obj = new stdClass();
                         $obj->product_id = $data['product_id'];
                         $obj->product_unit_id =  $data['product_unit_id'];
 
-                        if ($existing_ordered_qty > 0) {
-                            $obj->qty = $purchaseInvoiceData->qty  - $existing_ordered_qty;
-                            $obj->available_qty = $purchaseInvoiceData->qty  - $existing_ordered_qty;
-                            $obj->price = $resultPrice  * ($purchaseInvoiceData->qty  - $existing_ordered_qty);
-                        } else {
-                            $obj->qty = $existing_ordered_qty + $alreadyQuantityOrder;
-                            $obj->available_qty = $existing_ordered_qty + $alreadyQuantityOrder;
-                            $obj->price = $resultPrice  * ($existing_ordered_qty + $alreadyQuantityOrder);
-                        }
-
+                        $obj->qty = $alreadyQuantityOrder;
+                        $obj->available_qty = $alreadyQuantityOrder;
+                        $obj->price = $value->price  * $alreadyQuantityOrder;
+                        $obj->unit_price = $value->price;
+                        $obj->purchase_invoice_id = $value->id;
                         $obj->order_id = $orderId;
-                        $obj->product_name = null;
                         $obj->created_by = $currentUser;
-                        $obj->purchase_invoice_id = $purchaseInvoiceId;
-                        $answers[] = $obj;
+                        $obj->key = $key;
 
+                        $answers[] = $obj;
                         break;
-                    }
-                    if (($existing_ordered_qty + $alreadyQuantityOrder) > $value->qty) {
+                    } else if (($alreadyQuantityOrder + $orderDetailsQty) > $value->qty) {
 
 
-                        // dd('2');
-                        $resultPurchase->price = $value->price;
-                        $purchaseInvoiceData->ordered_qty = $existing_ordered_qty + ($value->qty - $value->ordered_qty);
-                        $alreadyQuantityOrder = $alreadyQuantityOrder - ($value->qty - $existing_ordered_qty);
-
-                        $purchaseInvoiceData->save();
-                        $resultPrice = $resultPurchase->price;
-                        $purchaseInvoiceId = $resultPurchase->purchase_invoice_id;
                         $obj = new stdClass();
                         $obj->product_id = $data['product_id'];
                         $obj->product_unit_id =  $data['product_unit_id'];
 
-
-                        if ($existing_ordered_qty > 0) {
-                            $obj->qty =  ($value->qty - $value->ordered_qty); 
-                            $obj->available_qty =  ($value->qty - $value->ordered_qty);
-                            $obj->price = $resultPrice  * (($value->qty - $value->ordered_qty));
-                        } else { 
-                            $obj->qty = $existing_ordered_qty + ($value->qty - $value->ordered_qty);
-                            $obj->available_qty = $existing_ordered_qty + ($value->qty - $value->ordered_qty);
-                            $obj->price = $resultPrice  * ($existing_ordered_qty + ($value->qty - $value->ordered_qty));
-                        }
-
-
+                        $obj->qty = ($value->qty -  $orderDetailsQty);
+                        $obj->available_qty = ($value->qty -  $orderDetailsQty);
+                        $obj->price = $value->price  * ($value->qty -  $orderDetailsQty);
+                        $obj->unit_price = $value->price;
+                        $obj->purchase_invoice_id = $value->id;
                         $obj->order_id = $orderId;
-                        $obj->product_name = null;
                         $obj->created_by = $currentUser;
-                        $obj->purchase_invoice_id = $purchaseInvoiceId;
-                        $answers[] = $obj;
+                        $obj->key = $key;
 
+                        // dd(
+                        //     $alreadyQuantityOrder,
+                        //     $orderDetailsQty
+                        // );
+                        // dd($alreadyQuantityOrder, $orderDetailsQty);
+                        $alreadyQuantityOrder = ($alreadyQuantityOrder - $orderDetailsQty);
+
+                        // dd($alreadyQuantityOrder);
+                        $answers[] = $obj;
                         continue;
                     }
                 }
-                // else {
-                //     $resultPurchase->price = PurchaseInvoiceDetails::orderBy('id', 'ASC')->where('product_id', $data['product_id'])->where('unit_id', $data['product_unit_id'])->get()->last()->price;
-
-                //     $purchaseInvoiceData->ordered_qty = $existing_ordered_qty + ($value->qty - $value->ordered_qty);
-                //     $alreadyQuantityOrder = $alreadyQuantityOrder - ($value->qty - $existing_ordered_qty);
-
-                //     $purchaseInvoiceData->save();
-                //     $resultPrice = $resultPurchase->price;
-                //     $purchaseInvoiceId = $resultPurchase->purchase_invoice_id;
-                //     $obj = new stdClass();
-                //     $obj->product_id = $data['product_id'];
-                //     $obj->product_unit_id =  $data['product_unit_id'];
-                //     $obj->qty = $data['qty'];
-                //     $obj->available_qty = $data['qty'];
-                //     $obj->order_id = $orderId;
-                //     $obj->price = $resultPrice  * $data['qty'];
-                //     $obj->product_name = null;
-                //     $obj->created_by = $currentUser;
-                //     $obj->purchase_invoice_id = $purchaseInvoiceId;
-                //     $answers[] = $obj;
-                //     break;
-                // }
             }
 
 
@@ -589,39 +589,183 @@ class OrderController extends Controller
             // -------
 
 
-        } 
+        }
+
+
+
+        $final_products =   json_decode(json_encode($answers), true);
+
+        dd($final_products);
+        return $final_products;
+    }
+
+
+
+    public function addPendingOrderDetails(array $orderDetails,   $orderId, $currentUser)
+    {
+
+
+
+        foreach ($orderDetails as   $data) {
+
+            $productUnitPricePurchaseInvoice = PurchaseInvoiceDetails::orderBy('id', 'ASC')->where('product_id', $data['product_id'])->where('unit_id', $data['product_unit_id'])->get();
+            $productUnitPricePurchaseInvoiceLatest = PurchaseInvoiceDetails::orderBy('id', 'DESC')->where('product_id', $data['product_id'])->where('unit_id', $data['product_unit_id'])->first();
+
+            $resultPurchase = new stdClass();
+            $alreadyQuantityOrder = $data['qty'];
+
+
+
+            if ($productUnitPricePurchaseInvoiceLatest->qty == $productUnitPricePurchaseInvoiceLatest->ordered_qty) {
+
+
+                $resultPrice = $productUnitPricePurchaseInvoiceLatest->price;
+                $purchaseInvoiceId = $productUnitPricePurchaseInvoiceLatest->purchase_invoice_id;
+                $obj = new stdClass();
+                $obj->product_id = $data['product_id'];
+                $obj->product_unit_id =  $data['product_unit_id'];
+                $obj->qty = $data['qty'];
+                $obj->available_qty = $data['qty'];
+                $obj->order_id = $orderId;
+                $obj->price = $resultPrice  * $data['qty'];
+                $obj->product_name = null;
+                $obj->created_by = $currentUser;
+                $obj->purchase_invoice_id = $purchaseInvoiceId;
+                $answers[] = $obj;
+            } else {
+
+
+                foreach ($productUnitPricePurchaseInvoice as $key => $value) {
+
+
+                    $resultPurchase->purchase_invoice_id = $value->purchase_invoice_id;
+
+                    $purchaseInvoiceData = PurchaseInvoiceDetails::find($value->id);
+
+                    $existing_ordered_qty = $purchaseInvoiceData->ordered_qty;
+
+
+                    if (($value->ordered_qty < $value->qty)) {
+
+                        $resultPurchase->price = $value->price;
+                        if (($existing_ordered_qty + $alreadyQuantityOrder) <= $value->qty) {
+
+                            $purchaseInvoiceData->ordered_qty = $existing_ordered_qty + $alreadyQuantityOrder;
+
+                            $purchaseInvoiceData->save();
+                            $resultPrice = $resultPurchase->price;
+                            $purchaseInvoiceId = $resultPurchase->purchase_invoice_id;
+
+                            $obj = new stdClass();
+                            $obj->product_id = $data['product_id'];
+                            $obj->product_unit_id =  $data['product_unit_id'];
+                            $orderDetail = OrderDetails::where('product_unit_id', $data['product_unit_id'])->where('product_id', $data['product_id'])->where('purchase_invoice_id', $value->purchase_invoice_id)->first();
+
+                            if ($existing_ordered_qty > 0) {
+                                $tempOrderDetail = $orderDetail;
+                                if (!is_null($orderDetail)) {
+                                    $orderDetail->delete();
+                                }
+                                $obj->qty = $tempOrderDetail->qty + $data['qty'];
+                                $obj->price = $resultPrice  * ($tempOrderDetail->qty + $data['qty']);
+                            } else {
+                                $obj->qty = $alreadyQuantityOrder;
+                                $obj->price = $resultPrice  * $alreadyQuantityOrder;
+                            }
+
+                            $obj->order_id = $orderId;
+                            $obj->product_name = null;
+                            $obj->created_by = $currentUser;
+                            $obj->purchase_invoice_id = $purchaseInvoiceId;
+                            $answers[] = $obj;
+                            break;
+                        }
+                        if (($existing_ordered_qty + $alreadyQuantityOrder) > $value->qty) {
+
+                            $purchaseInvoiceData->ordered_qty = $existing_ordered_qty + ($value->qty - $value->ordered_qty);
+
+                            $alreadyQuantityOrder = $alreadyQuantityOrder - ($value->qty - $existing_ordered_qty);
+
+                            dd($alreadyQuantityOrder);
+                            $purchaseInvoiceData->save();
+                            $resultPrice = $resultPurchase->price;
+                            $purchaseInvoiceId = $resultPurchase->purchase_invoice_id;
+                            $obj = new stdClass();
+                            $obj->product_id = $data['product_id'];
+                            $obj->product_unit_id =  $data['product_unit_id'];
+                            if ($existing_ordered_qty > 0) {
+
+                                $orderDetail = OrderDetails::where('product_unit_id', $data['product_unit_id'])->where('product_id', $data['product_id'])->where('purchase_invoice_id', $value->purchase_invoice_id)->first();
+
+                                dd(
+                                    $value->qty,
+                                    $value->ordered_qty,
+                                    $alreadyQuantityOrder,
+                                    (($value->qty - $value->ordered_qty) + $alreadyQuantityOrder)
+                                );
+
+                                if ((($value->qty - $value->ordered_qty) + $alreadyQuantityOrder) >=  $value->qty) {
+
+                                    $tempOrderDetail = $orderDetail;
+                                    if (!is_null($orderDetail)) {
+                                        $orderDetail->delete();
+                                    }
+
+                                    // dd($tempOrderDetail->qty, $data['qty'], $alreadyQuantityOrder);
+
+                                    $obj->qty =  ($data['qty'] - $alreadyQuantityOrder) + $tempOrderDetail->qty;
+
+                                    $obj->price = $resultPrice  * (($data['qty'] - $alreadyQuantityOrder) + $tempOrderDetail->qty);
+                                    // $obj->available_qty =  ($value->qty - $value->ordered_qty) + $alreadyQuantityOrder;
+                                } else {
+
+
+                                    $obj->qty =  ($value->qty - $value->ordered_qty);
+                                    // $obj->qty =  1;
+                                    $obj->price = $resultPrice  * ($value->qty - $value->ordered_qty);
+                                    // $obj->available_qty =  ($value->qty - $value->ordered_qty);
+                                }
+                            } else {
+                                $obj->qty = $existing_ordered_qty + ($value->qty - $value->ordered_qty);
+                                // $obj->available_qty = $existing_ordered_qty + ($value->qty - $value->ordered_qty);
+                                $obj->price = $resultPrice  * ($existing_ordered_qty + ($value->qty - $value->ordered_qty));
+                            }
+
+                            $obj->order_id = $orderId;
+                            $obj->product_name = null;
+                            $obj->created_by = $currentUser;
+                            $obj->purchase_invoice_id = $purchaseInvoiceId;
+                            $answers[] = $obj;
+                            continue;
+                        }
+                    }
+                }
+            }
+
+
+
+            // to update orders quqntity in products
+            $productData = Product::where('id', $data['product_id'])->first();
+            $number_orders = $productData->number_orders;
+            $productData->number_orders = $number_orders + $data['qty'];
+            $productData->save();
+            // -------
+
+
+        }
         if (count($orderDetails) == 0) {
             $answers = array();
         }
 
-        $productsNotFoundResult = json_decode(json_encode($productsNotFoundResult), true);
+
 
         $answers =   json_decode(json_encode($answers), true);
-        $all_products = array_merge($productsNotFoundResult, $answers);
-        return $all_products;
+
+        // dd($answers);
+        return $answers;
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\Order  $order
-     * @return \Illuminate\Http\Response
-     */
-    public function show(Order $order)
-    {
-        //
-    }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Order  $order
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Order $order)
-    {
-        //
-    }
 
     /**
      * Update the specified resource in storage.
@@ -810,83 +954,6 @@ class OrderController extends Controller
         return $obj;
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\Order  $order
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(Order $order)
-    {
-        //
-    }
-    // Generate PDF
-
-    public function createPDF(Request $request, $id)
-    {
-        // retreive all records from db
-
-        $order = Order::where('id', $id)->get();
-        $orderDetails = OrderDetails::where('order_id', $order[0]->id)->get();
-
-        $objOrder = new stdClass();
-        $objOrder->orderId = $order[0]->id;
-        $objOrder->createdBy = $order[0]->created_by;
-        $objOrder->createdByUserName =  User::where('id', $order[0]->created_by)->get()[0]->name;
-        $objOrder->createdAt = $order[0]->created_at;
-        $objOrder->stateId = $order[0]->request_state_id;
-        $objOrder->state_name =  $this->getStateNameById($order[0]->request_state_id)[0]->name;;
-        $objOrder->restricted_state_name =  $this->getStateNameById($order[0]->restricted_state_id)[0]->name;;
-        $objOrder->desc = $order[0]->desc;
-        $objOrder->branch_id = $order[0]->branch_id;
-        $objOrder->branch_name =  Branch::where('id', $order[0]->branch_id)->get()[0]->name;
-        $objOrder->manager_name = User::where('role_id', 4)->get()[0]->name;
-
-
-
-        $finalResult[] = $objOrder;
-        foreach ($orderDetails as $key => $value) {
-            $obj = new stdClass();
-            $obj->product_id = $value->product_id;
-            $obj->product_name = $this->getProductProductNameById($value->product_id)[0]->name;
-            $obj->unit_id = $value->product_unit_id;
-            $obj->unit_name = $this->getUnitNameById($value->product_unit_id)[0]->name;
-            $obj->price =  $value->price;
-            $obj->qty = $value->qty;
-            array_push($finalResult, $obj);
-        }
-
-        $exists = Storage::disk('local')->exists('public/pdf_files/order-no-' . $order[0]->id . '.pdf');
-
-        if ($exists) {
-            $path = storage_path('public/storage/pdf_files/order-no-' . $order[0]->id . '.pdf');
-            $pathExploded = explode("/", $path);
-            $obj = new stdClass();
-            $obj->res = 'error';
-            $obj->msg = 'pdf is exist';
-
-            $obj->orderId =  $order[0]->id;
-            $obj->path = URL::to('/') . '/' . 'public/storage/pdf_files/' . end($pathExploded);
-        } else {
-            $pdf = PDF::loadView('vendor.voyager.orders.pdf_view', ['finalResult' => $finalResult]);
-            $content = $pdf->download()->getOriginalContent();
-            $down = Storage::put('public/pdf_files/order-no-' . $order[0]->id . '.pdf', $content);
-            if ($down == 1) {
-                $path = storage_path('public/pdf_files/order-no-' . $order[0]->id . '.pdf');
-                $pathExploded = explode("/", $path);
-                $obj = new stdClass();
-                $obj->res = 'success';
-                $obj->msg = 'done successfully';
-                $obj->orderId =  $order[0]->id;
-                $obj->path = URL::to('/') . '/' . 'public/storage/pdf_files/' . end($pathExploded);
-            } else {
-                $obj = new stdClass();
-                $obj->res = 'error';
-                $obj->msg = 'there are some errors';
-            }
-        }
-        return $obj;
-    }
 
 
     public function getUnitNameById($id)

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Voyager;
 
+use App\Models\OrderDetails;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\PurchaseInvoice;
@@ -30,6 +31,37 @@ use TCG\Voyager\Http\Controllers\Traits\BreadRelationshipParser;
 class StockController extends VoyagerBaseController
 {
     use BreadRelationshipParser;
+
+    public function getReportV2(Request $request)
+    {
+
+        $data = UnitPrice::get();
+
+        foreach ($data as $key => $value) {
+            $obj = new stdClass();
+            $obj->product_id = $value->product_id;
+            $obj->product_name = $value->product->name;
+            $obj->unit_name = $value->unit->name;
+            $obj->qty_in_purchase = $this->getQuantityInPurchase($value->product_id, $value->unit_id);
+            $obj->qty_in_orders = $this->getQuantityInOrders($value->product_id, $value->unit_id);
+            $obj->remaining_qty = $this->getQuantityInPurchase($value->product_id, $value->unit_id) - $this->getQuantityInOrders($value->product_id, $value->unit_id);
+            $final_result[] = $obj;
+        }
+
+      
+
+        return view('voyager::stock.stock-report-v2', compact('final_result'));
+    }
+
+    public function getQuantityInPurchase($product_id, $unit_id)
+    {
+        return PurchaseInvoiceDetails::where('product_id', $product_id)->where('unit_id', $unit_id)->get()->sum('qty');
+    }
+
+    public function getQuantityInOrders($product_id, $unit_id)
+    {
+        return OrderDetails::where('product_unit_id', $unit_id)->where('product_id', $product_id)->get()->sum('qty');
+    }
     public function getReport(Request $request)
     {
 
