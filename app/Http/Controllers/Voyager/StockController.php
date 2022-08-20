@@ -49,6 +49,7 @@ class StockController extends VoyagerBaseController
         }
 
       
+        // dd($final_result);
 
         return view('voyager::stock.stock-report-v2', compact('final_result'));
     }

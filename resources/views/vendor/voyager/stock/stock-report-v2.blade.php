@@ -52,8 +52,10 @@
                                     <th>Product id</th>
                                     <th>Product name</th>
                                     <th>Unit name</th>
-                                    <th>Quantity</th>
-                                    <th>Supplier</th>
+                                    <th>Quantity in store</th>
+                                    <th>Ordered quantity</th>
+                                    <th>Remaining quantity</th>
+
 
                                 </tr>
                             </thead>
@@ -63,9 +65,9 @@
                                         <td> {{ $value->product_id }} </td>
                                         <td> {{ $value->product_name }} </td>
                                         <td>{{ $value->unit_name }}</td>
-
+                                        <td>{{ $value->qty_in_purchase }}</td>
+                                        <td>{{ $value->qty_in_orders }}</td>
                                         <td> {{ $value->remaining_qty }} </td>
-                                        <td></td>
                                     </tr>
                                 @endforeach
                             </tbody>
