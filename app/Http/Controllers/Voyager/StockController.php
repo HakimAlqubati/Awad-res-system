@@ -35,7 +35,13 @@ class StockController extends VoyagerBaseController
     public function getReportV2(Request $request)
     {
 
-        $data = UnitPrice::get();
+        $data = UnitPrice::whereNotNull('id');
+
+        if (isset($request->product_id) && $request->product_id != null) {
+            $data->where('product_id', $request->product_id);
+        }
+        $data =  $data->get();
+
 
         foreach ($data as $key => $value) {
             $obj = new stdClass();
@@ -48,7 +54,7 @@ class StockController extends VoyagerBaseController
             $final_result[] = $obj;
         }
 
-      
+
         // dd($final_result);
 
         return view('voyager::stock.stock-report-v2', compact('final_result'));

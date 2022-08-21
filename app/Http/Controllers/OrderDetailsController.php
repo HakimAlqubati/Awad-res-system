@@ -99,10 +99,8 @@ class OrderDetailsController extends Controller
                             $product_id = $orderDetails->product_id;
                             $unit_id = $orderDetails->product_unit_id;
                             if ($product_id != null && $unit_id != null) {
-                                // $priceOfUnitProduct = $this->getUnitPriceData($product_id, $unit_id)->price;
-                                $priceOfUnitProduct = PurchaseInvoiceDetails::where('unit_id', $value['product_unit_id'])->where('product_id', $value['product_id'])->first()->price;
-                                // dd($priceOfUnitProduct);
-                                $orderDetails->price = $priceOfUnitProduct * $value['qty'];
+
+                                $orderDetails->price = $orderDetails->unit_price * $value['qty'];
                             }
                             $orderDetails->qty = $value['qty'];
                             $orderDetails->available_qty = $value['qty'];
@@ -119,10 +117,10 @@ class OrderDetailsController extends Controller
                             $orderDetails->product_id = $value['product_id'];
                             $orderDetails->product_unit_id = $value['product_unit_id'];
                             if ($value['qty'] && $value['qty'] != null) {
-                                $orderDetails->price = $unitPriceData->price * $value['qty'];
+                                $orderDetails->price = $orderDetails->unit_price * $value['qty'];
                                 $orderDetails->qty = $value['qty'];
                             } elseif ($value['qty'] == null) {
-                                $orderDetails->price = $unitPriceData->price *  $orderDetails->qty;
+                                $orderDetails->price = $orderDetails->unit_price *  $orderDetails->qty;
                             }
                         }
 

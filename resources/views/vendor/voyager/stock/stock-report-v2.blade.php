@@ -22,6 +22,31 @@
                 <div class="panel panel-bordered" style="padding-bottom:5px;">
                     <div class="container">
 
+                        <form class="form-inline form-filter" method="GET" action="<?php echo url('/'); ?>/admin/stock-report-v2">
+
+                            <div class="form-group">
+                         
+
+                                
+
+
+
+                                <label for="status">Product:</label>
+                                <select class="form-control" name="product_id" id="product_id">
+                                    <option value="">-Choose-</option>
+
+                                    @foreach (\App\Models\Product::get() as $item)
+                                        <option value="{{ $item->id }}"> {{ $item->name }} </option>
+                                    @endforeach
+                                </select>
+
+
+                          
+
+                            </div>
+                            <input class="form-control btn btn-primary" type="submit" value="Search">
+                        </form>
+
 
                         <div class="row">
 

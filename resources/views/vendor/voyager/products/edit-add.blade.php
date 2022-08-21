@@ -81,8 +81,8 @@ $add = is_null($dataTypeContent->getKey());
                                     </tr>
                                     <tr>
 
-                                        <th>Unit</th>
-                                        <th>Price</th>
+                                        <th colspan="2">Unit</th>
+                                        {{-- <th>Price</th> --}}
                                         <th><button type="button" id="btn-add" class="btn btn-success">+</button></th>
                                         <th><button type="button" id="btn-remove" class="btn btn-danger">-</button></th>
                                     </tr>
@@ -94,7 +94,7 @@ $add = is_null($dataTypeContent->getKey());
                                             <tr class="row_unit" id="row_unit">
                                                 <input type="hidden" id="unit_price_id<?php echo $key; ?>"
                                                     name="unit_price_id[]" value='<?php echo $item->id; ?>'>
-                                                <td>
+                                                <td colspan="2">
                                                     <select name="unit[]" id="" required>
                                                         <?php 
                                                         foreach ($units as $key => $value) {
@@ -110,16 +110,16 @@ $add = is_null($dataTypeContent->getKey());
                                                     </select>
 
                                                 </td>
-                                                <td>
-                                                    <input type="number" name="price[]" id="" value="<?php echo $item->price; ?>"
+                                                {{-- <td> --}}
+                                                    <input type="hidden"   name="price[]" id="" value="0"
                                                         required>
-                                                </td>
+                                                {{-- </td> --}}
                                             </tr>
                                         @endforeach
                                     @else
 
                                         <tr class="row_unit" id="row_unit">
-                                            <td>
+                                            <td colspan="2">
                                                 <select name="unit[]" id="" required>
 
                                                     <?php  foreach ($units as $key => $value) {
@@ -130,9 +130,9 @@ $add = is_null($dataTypeContent->getKey());
                                                 </select>
 
                                             </td>
-                                            <td>
-                                                <input type="number" name="price[]" id="" required>
-                                            </td>
+                                            {{-- <td> --}}
+                                                <input type="hidden" value="0" name="price[]" id="" required>
+                                            {{-- </td> --}}
                                         </tr>
 
                                     @endif
