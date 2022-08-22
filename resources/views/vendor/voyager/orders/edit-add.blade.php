@@ -199,9 +199,6 @@ $add = is_null($dataTypeContent->getKey());
                         </form>
                     </div>
 
-
-
-
                 </div>
             </div>
         </div>

@@ -237,11 +237,26 @@ class PurchaseInvoiceController extends VoyagerBaseController
 
     public function show(Request $request, $id)
     {
+
         $slug = $this->getSlug($request);
 
         $dataType = Voyager::model('DataType')->where('slug', '=', $slug)->first();
 
+
         $isSoftDeleted = false;
+
+
+        $purchaseInvoice = PurchaseInvoice::find($id);
+
+      
+        $purchaseInvoiceDetails = PurchaseInvoiceDetails::where('purchase_invoice_id', $id)->get();
+ 
+        $view = 'voyager::bread.read';
+
+        if (view()->exists("voyager::$slug.read")) {
+            $view = "voyager::$slug.read";
+        }
+
 
         if (strlen($dataType->model_name) != 0) {
             $model = app($dataType->model_name);
@@ -284,7 +299,14 @@ class PurchaseInvoiceController extends VoyagerBaseController
             $view = "voyager::$slug.read";
         }
 
-        return Voyager::view($view, compact('dataType', 'dataTypeContent', 'isModelTranslatable', 'isSoftDeleted'));
+        return Voyager::view($view, compact(
+            'dataType',
+            'dataTypeContent',
+            'isModelTranslatable',
+            'isSoftDeleted',
+            'purchaseInvoice',
+            'purchaseInvoiceDetails'
+        ));
     }
 
     //***************************************
@@ -572,7 +594,7 @@ class PurchaseInvoiceController extends VoyagerBaseController
 
         $units = Unit::get();
 
-        
+
 
         return Voyager::view($view, compact(
             'dataType',
@@ -596,7 +618,7 @@ class PurchaseInvoiceController extends VoyagerBaseController
     {
 
 
- 
+
 
         $purchaseInvoice = new PurchaseInvoice(
             [
