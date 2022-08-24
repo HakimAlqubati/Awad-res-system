@@ -22,15 +22,10 @@
                 <div class="panel panel-bordered" style="padding-bottom:5px;">
                     <div class="container">
 
-                        <form class="form-inline form-filter" method="GET" action="<?php echo url('/'); ?>/admin/stock-report-v2">
+                        <form class="form-inline form-filter" method="GET"
+                            action="<?php echo url('/'); ?>/admin/stock-report-v3">
 
                             <div class="form-group">
-                         
-
-                                
-
-
-
                                 <label for="status">Product:</label>
                                 <select class="form-control" name="product_id" id="product_id">
                                     <option value="">-Choose-</option>
@@ -39,10 +34,6 @@
                                         <option value="{{ $item->id }}"> {{ $item->name }} </option>
                                     @endforeach
                                 </select>
-
-
-                          
-
                             </div>
                             <input class="form-control btn btn-primary" type="submit" value="Search">
                         </form>
@@ -77,6 +68,7 @@
                                     <th>Product id</th>
                                     <th>Product name</th>
                                     <th>Unit name</th>
+                                    <th>Price</th>
                                     <th>Purchased quantity</th>
                                     <th>Ordered quantity</th>
                                     <th>Remaining quantity</th>
@@ -90,8 +82,9 @@
                                         <td> {{ $value->product_id }} </td>
                                         <td> {{ $value->product_name }} </td>
                                         <td>{{ $value->unit_name }}</td>
-                                        <td>{{ $value->qty_in_purchase }}</td>
-                                        <td>{{ $value->qty_in_orders }}</td>
+                                        <td>{{ $value->price }}</td>
+                                        <td>{{ $value->total_qty }}</td>
+                                        <td> {{ $value->ordered_qty }} </td>
                                         <td> {{ $value->remaining_qty }} </td>
                                     </tr>
                                 @endforeach

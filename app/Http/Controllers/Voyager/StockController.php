@@ -53,11 +53,41 @@ class StockController extends VoyagerBaseController
             $obj->remaining_qty = $this->getQuantityInPurchase($value->product_id, $value->unit_id) - $this->getQuantityInOrders($value->product_id, $value->unit_id);
             $final_result[] = $obj;
         }
-
-
-        // dd($final_result);
-
         return view('voyager::stock.stock-report-v2', compact('final_result'));
+    }
+
+
+    public function getReportV3(Request $request)
+    {
+
+        // $purchaseInvoiceDetails = PurchaseInvoiceDetails::groupBy('price')->groupBy('product_id')->groupBy('unit_id')->selectRaw('*, sum(qty) as total_qty')->get();
+
+
+        $data = PurchaseInvoiceDetails::whereNotNull('id');
+
+        if (isset($request->product_id) && $request->product_id != null) {
+            $data->where('product_id', $request->product_id);
+        }
+        $data =  $data->groupBy('price')->groupBy('product_id')->groupBy('unit_id')->selectRaw('*, sum(qty) as total_qty')->get();
+
+
+        // $users = json_decode($request->json()->all());
+        $final_result = [];
+        foreach ($data as   $value) {
+            $obj = new stdClass();
+            $obj->product_id = $value->product_id;
+            $obj->unit_id = $value->unit_id;
+            $obj->product_name =  Product::find($value->product_id)->name;
+            $obj->unit_name =  Unit::find($value->unit_id)->name;
+            $obj->price = $value->price;
+            $obj->total_qty = $value->total_qty;
+            $obj->ordered_qty = OrderDetails::where('unit_price', $value->price)->where('product_id', $value->product_id)->where('product_unit_id', $value->unit_id)->sum('qty');
+            $obj->remaining_qty = $value->total_qty - OrderDetails::where('unit_price', $value->price)->where('product_id', $value->product_id)->where('product_unit_id', $value->unit_id)->sum('qty');
+            $final_result[] = $obj;
+        }
+        // return response()->json($final_result);
+
+        return view('voyager::stock.stock-report-v3', compact('final_result'));
     }
 
     public function getQuantityInPurchase($product_id, $unit_id)

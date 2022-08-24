@@ -77,7 +77,7 @@
                                     <td scope="row">{{ $loop->iteration }}</td>
                                     <td>{{ $item->product_id }}</td>
                                     <td>{{ \App\Models\Product::find($item->product_id)->name }}</td>
-                                    <td>{{ $item->unit_id }}</td>
+                                    <td>{{  \App\Models\Unit::find($item->unit_id)->name  }}</td>
                                     <td>{{ $item->price }}</td>
                                     <td>{{ $item->qty }}</td>
                                     <td>{{ $item->total_price }}</td>
