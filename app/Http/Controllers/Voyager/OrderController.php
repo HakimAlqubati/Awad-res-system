@@ -50,6 +50,8 @@ class OrderController extends  VoyagerBaseController
 
     public function getReport(Request $request)
     {
+
+        // dd($request->all());
         $strSelect = "select orders.id, orders.request_state_id , request_states.name as state_name
         , orders.created_by,  users.name as created_by_name ,orders.branch_id, branches.name as branch_name
        ,  orders.created_at
@@ -85,6 +87,7 @@ class OrderController extends  VoyagerBaseController
 
 
 
+
         if (($request->from_date)) {
             $from_date = $request->from_date;
             if ($request->to_date) {
@@ -102,6 +105,7 @@ class OrderController extends  VoyagerBaseController
         // }
 
 
+
         // $strSelect .= " where orders.created_at between '$from_date' AND '$to_date'  ";
 
 
@@ -115,11 +119,13 @@ class OrderController extends  VoyagerBaseController
         $strSelect .= " ORDER BY id DESC
         ";
 
+
         if ($request->branch_id && $request->branch_id != null) {
             $data = DB::select($strSelect);
         } else {
             $data = [];
         }
+        // dd($request->branch_id, $data, $strSelect);
 
         $branches = Branch::get();
         $products = Product::get();
@@ -363,7 +369,7 @@ class OrderController extends  VoyagerBaseController
 
         $finalResultOrder = [];
         $finalResult = [];
-        
+
 
         foreach ($order as   $val) {
             $obj = new stdClass();

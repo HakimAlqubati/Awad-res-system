@@ -19,12 +19,40 @@
 
 
     <div class="page-content read container-fluid">
-        {{-- <form   method="GET">
-            From:<input type="date" name="from" value="<?php echo date('Y-m-d'); ?>">
-            To:<input type="date" name="to" value="<?php echo date('Y-m-d'); ?>">
 
-            <button type="submit" class="btn btn-success btn-sm">Search</button>
-        </form> --}}
+        <form class="form-inline form-filter no-print" method="GET" action="<?php echo url('/'); ?>/admin/transfer-list">
+            <div class="form-group">
+                <label for="status">Transfer no:</label>
+                <input type="text"   class="form-control" name="transfer_no" id="transfer_no" />
+
+
+
+            </div>
+
+            <div class="form-group">
+                <label for="status">Branch:</label>
+                <select class="form-control" name="branch_id" id="branch_id">
+
+                    <option value="">-Choose-</option>
+                    @foreach (\App\Models\Branch::get() as $item)
+                        <option value="{{ $item->id }}"> {{ $item->name }} </option>
+                    @endforeach
+                </select>
+            </div>
+
+
+            <div class="form-group">
+                <label for="status"> From date:</label>
+                <input type="date" name="from_date" type="date" class="form-control">
+
+                <label for="status"> To date:</label>
+                <input type="date" name="to_date" type="date" class="form-control">
+
+            </div>
+
+
+            <input class="form-control btn btn-primary" type="submit" value="Search">
+        </form>
         <div class="row">
             <div class="col-md-12">
 

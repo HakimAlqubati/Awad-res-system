@@ -3,34 +3,54 @@
 namespace App\Http\Controllers;
 
 use App\Models\Branch;
-use Illuminate\Http\Request;
+
 use App\Models\Order;
 use App\Models\OrderDetails;
 use App\Models\Product;
 use App\Models\RequestState;
 use App\Models\Unit;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 use stdClass;
 
 class TransferController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
 
-        $orderDetails = OrderDetails::where(
-            'available_in_store',
-            1
-        )->get();
+
+        $strSelect = "select * from order_details 
+        inner join orders on orders.id = order_details.order_id
+        ";
+
+        if (isset($request->transfer_no) && $request->transfer_no != null) {
+            $strSelect .= " where orders.id = " . $request->transfer_no;
+        }
+        if (isset($request->branch_id) && $request->branch_id != null) {
+            $strSelect .= " and orders.branch_id = " . $request->branch_id;
+        }
+
+        if (($request->from_date)) {
+            $from_date = $request->from_date;
+            if ($request->to_date) {
+                $to_date = $request->to_date;
+            } else {
+                $to_date = date('Y-m-d');
+                // $to_date = date('Y-m-d', strtotime(DB::select('select max(created_at) as max_date from orders')[0]->max_date));
+            }
+
+            $strSelect .= " and orders.created_at between '$from_date' AND '$to_date'  ";
+        }
 
 
+        $orderDetails = DB::select($strSelect);
         $orderIds = array();
         $data = array();
 
         foreach ($orderDetails as $key => $value) {
-
-            $orderIds[] = $value['order_id'];
+            $orderIds[] = $value->order_id;
         }
-
 
 
 

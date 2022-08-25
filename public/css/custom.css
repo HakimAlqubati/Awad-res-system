@@ -1,0 +1,74 @@
+.voyager .side-menu.sidebar-inverse .navbar {
+    background-color: #c82da2 !important;
+}
+
+.voyager .side-menu.sidebar-inverse .navbar li>a {
+    color: #f7f7f7;
+}
+
+.app-container.expanded .content-container .navbar-top {
+    padding-left: 250px;
+    background: #c82da2 !important;
+}
+
+.app-container.expanded .content-container .side-menu {
+    width: 250px;
+    background: radial-gradient(black, transparent);
+    background: #c82da2 !important;
+}
+
+.voyager .navbar,
+.voyager .navbar.navbar-default {
+    background-color: #c82da2 !important;
+}
+
+.voyager .table>thead>tr>th {
+    background-color: #c82da2 !important;
+}
+
+.table>caption+thead>tr:first-child>td,
+.table>caption+thead>tr:first-child>th,
+.table>colgroup+thead>tr:first-child>td,
+.table>colgroup+thead>tr:first-child>th,
+.table>thead:first-child>tr:first-child>td,
+.table>thead:first-child>tr:first-child>th {
+    color: white !important;
+    text-align: center !important;
+}
+
+.table>tbody>tr>td,
+.table>tbody>tr>th,
+.table>tfoot>tr>td,
+.table>tfoot>tr>th,
+.table>thead>tr>td,
+.table>thead>tr>th {
+    text-align: center !important;
+}
+
+.hamburger-inner:after,
+.hamburger-inner:before {
+    background-color: white !important;
+}
+
+.hamburger-inner {
+    background-color: white !important;
+}
+
+body {
+    font-weight: bold !important;
+}
+
+.voyager .pagination .active>a,
+.voyager .pagination .active>a:focus,
+.voyager .pagination .active>a:hover,
+.voyager .pagination .active>span:focus,
+.voyager .pagination .active>span:hover,
+.voyager .pagination .active span {
+    z-index: 3;
+    color: #fff;
+    cursor: default;
+    background-color: #62a8ea;
+    border-color: #62a8ea;
+    outline: none;
+    background: #c82da2 !important;
+}
