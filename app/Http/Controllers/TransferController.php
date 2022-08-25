@@ -22,6 +22,7 @@ class TransferController extends Controller
 
         $strSelect = "select * from order_details 
         inner join orders on orders.id = order_details.order_id
+        where order_details.available_in_store = 1
         ";
 
         if (isset($request->transfer_no) && $request->transfer_no != null) {
@@ -45,6 +46,7 @@ class TransferController extends Controller
 
 
         $orderDetails = DB::select($strSelect);
+        // dd($orderDetails);
         $orderIds = array();
         $data = array();
 
@@ -56,7 +58,7 @@ class TransferController extends Controller
 
         if (count($orderIds)) {
             // $data = Order::whereIn('id', $orderIds)->get();
-            foreach (Order::whereIn('id', $orderIds)->get() as   $value) {
+            foreach (Order::whereIn('id', $orderIds)->orderBy('id','DESC')->get() as   $value) {
 
                 $data[]  = [
                     'id' => $value->id,
