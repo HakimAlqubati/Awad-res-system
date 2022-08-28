@@ -29,20 +29,14 @@
 
         p {
             font-weight: bold;
+            text-align: left !important;
         }
     </style>
 
 @stop
 
 @section('page_header')
-
-
-    <h1 class="page-title">
-
-
-
-
-    </h1>
+ 
     @include('voyager::multilingual.language-selector')
 @stop
 
@@ -57,7 +51,9 @@
             <div
                 style="box-shadow: none;text-align: right; padding-top: 20px;padding-right: 30px;"class="col-md-3 col-sm-3 col-xs-3">
                 <p>Orders report</p>
-
+ 
+                <p>From date ( {{$from_date}} ) </p>
+                <p>To date  ( {{$to_date}} )</p>
 
             </div>
 

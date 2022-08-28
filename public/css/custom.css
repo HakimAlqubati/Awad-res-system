@@ -2,6 +2,15 @@
     background-color: #c82da2 !important;
 }
 
+
+.app-container .side-body .container-fluid {
+    padding-right: 15px !important;
+    padding-left: 15px;
+    margin-right: auto;
+    margin-left: auto;
+
+}
+
 .voyager .side-menu.sidebar-inverse .navbar li>a {
     color: #f7f7f7;
 }
@@ -16,6 +25,22 @@
     background: radial-gradient(black, transparent);
     background: #c82da2 !important;
 }
+
+@media print {
+
+    .app-container.expanded .content-container .side-menu {
+        display: none !important;
+    }
+
+    .app-container .content-container .side-body.padding-top {
+        padding-top: 0px;
+        padding-left: 0px;
+        margin-left: 0px;
+    }
+
+}
+
+
 
 .voyager .navbar,
 .voyager .navbar.navbar-default {

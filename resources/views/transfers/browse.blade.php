@@ -1,5 +1,36 @@
 @extends('voyager::master')
 
+@section('css')
+ 
+    <style>
+        th {
+            background-color: #ededd5 !important;
+            font-weight: bold;
+        }
+
+        @media print {
+
+
+
+            .no-print,
+            .no-print * {
+                display: none !important;
+            }
+
+
+            .app-container.expanded .side-body {
+                margin-right: 0px !important;
+            }
+        }
+
+        p {
+            font-weight: bold;
+            text-align: left !important;
+        }
+    </style>
+
+@stop
+
 
 @section('page_header')
 

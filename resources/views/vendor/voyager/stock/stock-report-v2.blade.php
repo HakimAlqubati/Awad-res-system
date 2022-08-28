@@ -1,15 +1,43 @@
 @extends('voyager::master')
+@section('css')
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href={{ url('/') . '/multiselect/css/style_custom.css' }}>
+
+    <style>
+        th {
+            background-color: #ededd5 !important;
+            font-weight: bold;
+        }
+
+        @media print {
+
+
+
+            .no-print,
+            .no-print * {
+                display: none !important;
+            }
+
+
+            .app-container.expanded .side-body {
+                margin-right: 0px !important;
+            }
+        }
+
+        p {
+            font-weight: bold;
+            text-align: left !important;
+        }
+    </style>
+
+@stop
 
 
 @section('page_header')
 
-
-    <h1 class="page-title">
-
-
-
-
-    </h1>
+ 
     @include('voyager::multilingual.language-selector')
 @stop
 
@@ -22,16 +50,31 @@
                 <div class="panel panel-bordered" style="padding-bottom:5px;">
                     <div class="container">
 
-                        <form class="form-inline form-filter" method="GET" action="<?php echo url('/'); ?>/admin/stock-report-v2">
+                        <div style="box-shadow: none;border: 1px solid #38393a;
+                        border-radius: 20px; "class="row">
+                
+                            <div
+                                style="box-shadow: none;text-align: right; padding-top: 20px;padding-right: 30px;"class="col-md-3 col-sm-3 col-xs-3">
+                                <p>General Stock Report</p>
+                 <p>   Date <strong> ( {{ date('y-m-d') }} ) </strong></p>
+                            
+                
+                            </div>
+                
+                            <div style="box-shadow: none; text-align: center;"class="col-md-6 col-sm-6 col-xs-6">
+                                <img style="margin-top: 15px;" width="155px" height="155px"
+                                    src="http://15.185.62.165/Ressystemv2/public/logo.png" alt="">
+                            </div>
+                            <div
+                                style="box-shadow: none; padding-top: 20px;text-align: left;padding-left: 30px;"class="col-md-3 col-sm-3 col-xs-3">
+                
+                            </div>
+                        </div>
 
-                            <div class="form-group">
-                         
+                        
+                        <form class="form-inline form-filter no-print" method="GET" action="<?php echo url('/'); ?>/admin/stock-report-v2">
 
-                                
-
-
-
-                                <label for="status">Product:</label>
+                            <div class="form-group">     <label for="status">Product:</label>
                                 <select class="form-control" name="product_id" id="product_id">
                                     <option value="">-Choose-</option>
 
@@ -48,22 +91,7 @@
                         </form>
 
 
-                        <div class="row">
-
-                            <div class="col-md-4" style="text-align: center; padding: 20px;">
-                                <img src="http://15.185.62.165/Ressystemv2/public/logo.png" alt=""
-                                    style="height: 77px;">
-                            </div>
-                            <div class="col-md-4"
-                                style="    height: 100px;
-                                                           
-                                                            padding-top: 40px;
-                                                            text-align: center;">
-                                <p style="font-weight: bold;">
-                                    Date <strong> ( {{ date('y-m-d') }} ) </strong>
-                                </p>
-                            </div>
-                        </div>
+                       
                         <table class="table table-striped">
                             <thead>
 

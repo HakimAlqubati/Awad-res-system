@@ -87,6 +87,8 @@ class OrderController extends  VoyagerBaseController
 
 
 
+        $from_date = null;
+        $to_date = null;
 
         if (($request->from_date)) {
             $from_date = $request->from_date;
@@ -130,7 +132,7 @@ class OrderController extends  VoyagerBaseController
         $branches = Branch::get();
         $products = Product::get();
         $units = Unit::get();
-        return view('voyager::orders.order-report', compact('data', 'branches', 'products', 'units'));
+        return view('voyager::orders.order-report', compact('data', 'branches', 'products', 'units', 'from_date', 'to_date'));
     }
     public function index(Request $request)
     {
