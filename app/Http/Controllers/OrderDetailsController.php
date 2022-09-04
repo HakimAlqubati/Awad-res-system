@@ -95,25 +95,137 @@ class OrderDetailsController extends Controller
             } else {
                 if ($operation == "update") {
                     try {
+
                         if (($value['qty'] && $value['qty'] != null) || ($value['qty'] == 0)) {
+                            // Start with purchase invoice
+
+
+                            $orderDetailsData = OrderDetails::where('product_unit_id', $value['product_unit_id'])->where('product_id', $value['product_id'])->where('purchase_invoice_id', $orderDetails->purchase_invoice_id)->where('order_id', $orderDetails->order_id)->first();
+
+                            // $productPurchaseInvoice = PurchaseInvoiceDetails::orderBy('id', 'ASC')->where('product_id', $value['product_id'])->where('unit_id', $value['product_unit_id'])->get()->where('purchase_invoice_id', $value['purchase_invoice_id'])->toArray();
+                            $productPurchaseInvoice = PurchaseInvoiceDetails::find($orderDetailsData->purchase_invoice_id)->toArray();
+
+                            // $lastPurchaseInvoice = end($productPurchaseInvoice);
+
+                            $orderDetailsQty = OrderDetails::where('product_unit_id', $value['product_unit_id'])->where('product_id', $value['product_id'])->where('purchase_invoice_id', $orderDetails->purchase_invoice_id)->get()->sum('qty');
+
+                            // dd($productPurchaseInvoice, $orderDetailsQty, $orderDetails->purchase_invoice_id);
+                            $resultPurchase = new stdClass();
+
+                            $alreadyQuantityOrder = $value['qty'];
+
+                            $orderDetails->update(
+                                [
+                                    'qty' => $alreadyQuantityOrder,
+                                    'available_qty' => $alreadyQuantityOrder,
+                                    'price' => $productPurchaseInvoice['price']  * ($alreadyQuantityOrder),
+                                    'created_by' => $request->user()->id,
+                                ]
+                            );
+
+                            // foreach ($productPurchaseInvoice as $key => $val_purchase) {
+
+
+
+
+
+                            // $resultPurchase->purchase_invoice_id = $val_purchase['purchase_invoice_id'];
+
+
+                            // if ($val_purchase['qty'] > $orderDetailsQty) {
+
+                            //     if (($alreadyQuantityOrder + $orderDetailsQty) <= $val_purchase['qty']) {
+                            //         // dd($alreadyQuantityOrder, $orderDetailsQty, $val_purchase['qty'], $orderDetailsData);
+                            //         if (is_null($orderDetailsData)) {
+                            //             OrderDetails::create(
+                            //                 [
+                            //                     'product_id' => $value['product_id'],
+                            //                     'product_unit_id' => $value['product_unit_id'],
+                            //                     'qty' => $alreadyQuantityOrder,
+                            //                     'available_qty' => $alreadyQuantityOrder,
+                            //                     'price' => $val_purchase['price']  * $alreadyQuantityOrder,
+                            //                     'unit_price' => $val_purchase['price'],
+                            //                     'order_id' => $orderDetails->order_id,
+                            //                     'created_by' => $request->user()->id,
+                            //                     'purchase_invoice_id' => $val_purchase['id']
+                            //                 ]
+                            //             );
+                            //         } else {
+
+                            //             $orderDetails->update(
+                            //                 [
+                            //                     'qty' => $alreadyQuantityOrder + $orderDetails->qty,
+                            //                     'available_qty' => $alreadyQuantityOrder + $orderDetails->qty,
+                            //                     'price' => $val_purchase['price']  * ($alreadyQuantityOrder + $orderDetails->qty),
+                            //                     'created_by' => $request->user()->id,
+                            //                 ]
+                            //             );
+                            //         }
+
+                            //         break;
+                            //     } else if (($alreadyQuantityOrder + $orderDetailsQty) > $val_purchase['qty']) {
+
+
+                            //         // dd($alreadyQuantityOrder, $orderDetailsQty, $val_purchase['qty']);
+                            //         if ($val_purchase === end($productPurchaseInvoice)) {
+                            //             $qty = $alreadyQuantityOrder;
+                            //         } else {
+                            //             $qty = $val_purchase['qty'] -  $orderDetailsQty;
+                            //         }
+
+                            //         $alreadyQuantityOrder = $alreadyQuantityOrder - ($val_purchase['qty'] -  $orderDetailsQty);
+
+
+
+                            //         if (is_null($orderDetailsData)) {
+
+                            //             // dd('1');
+                            //             OrderDetails::create(
+                            //                 [
+                            //                     'product_id' => $value['product_id'],
+                            //                     'product_unit_id' => $value['product_unit_id'],
+                            //                     'qty' => $qty,
+                            //                     'available_qty' => $qty,
+                            //                     'price' => $val_purchase['price']  * $qty,
+                            //                     'unit_price' => $val_purchase['price'],
+                            //                     'order_id' => $orderDetails->order_id,
+                            //                     'created_by' => $request->user()->id,
+                            //                     'purchase_invoice_id' => $val_purchase['id']
+                            //                 ]
+                            //             );
+                            //         } else {
+                            //             // dd('2', $qty, $orderDetailsData->qty);
+                            //             $orderDetailsData->update(
+                            //                 [
+                            //                     'qty' => $qty,
+                            //                     'available_qty' => $qty,
+                            //                     'price' => $val_purchase['price']  * ($qty),
+                            //                     'created_by' => $request->user()->id,
+                            //                 ]
+                            //             );
+                            //         }
+
+
+                            //         continue;
+                            //     }
+                            // }
+                            // }
+
+                            // End with purchase invoices
+
                             $product_id = $orderDetails->product_id;
                             $unit_id = $orderDetails->product_unit_id;
                             if ($product_id != null && $unit_id != null) {
 
                                 $orderDetails->price = $orderDetails->unit_price * $value['qty'];
                             }
+                            // dd($orderDetails->qty, $value['qty']);
                             $orderDetails->qty = $value['qty'];
                             $orderDetails->available_qty = $value['qty'];
                         }
                         if (($value['product_unit_id'] && $value['product_unit_id'] != null) &&
                             ($value['product_id'] && $value['product_id'] != null)
                         ) {
-                            $unitPriceData = UnitPrice::where(
-                                [
-                                    ['product_id', '=', $value['product_id']],
-                                    ['unit_id', '=', $value['product_unit_id']]
-                                ]
-                            )->first();
                             $orderDetails->product_id = $value['product_id'];
                             $orderDetails->product_unit_id = $value['product_unit_id'];
                             if ($value['qty'] && $value['qty'] != null) {
@@ -127,13 +239,15 @@ class OrderDetailsController extends Controller
                         if (($value['available_in_store'] && $value['available_in_store'] != null) || ($value['available_in_store'] == 0)) {
                             $orderDetails->available_in_store = $value['available_in_store'];
                         }
-                        $orderDetails->save();
+
+                        // $orderDetails->save();
 
                         $obj->res = 'success';
                         $obj->msg = 'done updated successfully';
 
                         $result[] = $obj;
                     } catch (\Exception $e) {
+
                         $obj->res = 'faild';
                         $obj->msg = $e->getMessage();
                         $result[] = $obj;

@@ -81,8 +81,8 @@ class StockController extends VoyagerBaseController
             $obj->unit_name =  Unit::find($value->unit_id)->name;
             $obj->price = $value->price;
             $obj->total_qty = $value->total_qty;
-            $obj->ordered_qty = OrderDetails::where('unit_price', $value->price)->where('product_id', $value->product_id)->where('product_unit_id', $value->unit_id)->sum('qty');
-            $obj->remaining_qty = $value->total_qty - OrderDetails::where('unit_price', $value->price)->where('product_id', $value->product_id)->where('product_unit_id', $value->unit_id)->sum('qty');
+            $obj->ordered_qty = OrderDetails::where('available_in_store', 1)->where('unit_price', $value->price)->where('product_id', $value->product_id)->where('product_unit_id', $value->unit_id)->sum('qty');
+            $obj->remaining_qty = $value->total_qty - OrderDetails::where('available_in_store', 1)->where('unit_price', $value->price)->where('product_id', $value->product_id)->where('product_unit_id', $value->unit_id)->sum('qty');
             $final_result[] = $obj;
         }
         // return response()->json($final_result);
@@ -97,7 +97,7 @@ class StockController extends VoyagerBaseController
 
     public function getQuantityInOrders($product_id, $unit_id)
     {
-        return OrderDetails::where('product_unit_id', $unit_id)->where('product_id', $product_id)->get()->sum('qty');
+        return OrderDetails::where('available_in_store', 1)->where('product_unit_id', $unit_id)->where('product_id', $product_id)->get()->sum('qty');
     }
     public function getReport(Request $request)
     {
