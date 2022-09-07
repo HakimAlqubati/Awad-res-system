@@ -7,6 +7,12 @@ $add = is_null($dataTypeContent->getKey());
 
 @section('css')
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <style> 
+       form input,
+        form select{
+            color: black !important;
+        }
+        </style>
 @stop
 
 @section('page_title', __('voyager::generic.' . ($edit ? 'edit' : 'add')) . ' ' .

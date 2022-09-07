@@ -2,6 +2,21 @@
     background-color: #c82da2 !important;
 }
 
+.table-striped>tbody>tr:nth-child(odd)>td,
+.table-striped>tbody>tr:nth-child(odd)>th {
+    background-color: #c82da2;
+    color: white;
+}
+
+
+#dataTable a {
+    font-weight: 500;
+    text-decoration: none;
+    color: white;
+    font-weight: bold;
+}
+
+
 
 .app-container .side-body .container-fluid {
     padding-right: 15px !important;
@@ -59,6 +74,7 @@
 .table>thead:first-child>tr:first-child>th {
     color: white !important;
     text-align: center !important;
+    font-weight: bold;
 }
 
 .table>tbody>tr>td,

@@ -573,6 +573,8 @@ class OrderController extends  VoyagerBaseController
     // POST BR(E)AD
     public function update(Request $request, $id)
     {
+      
+
         $order = Order::find($id);
         if ($request->user()->role_id != 5) {
             $order->request_state_id =    $request->request_state_id;
@@ -596,10 +598,12 @@ class OrderController extends  VoyagerBaseController
         $update =  $order->save();
 
         if ($update == 1) {
-            $redirect = redirect()->back();
+            $slug = 'orders';
+            $dataType = Voyager::model('DataType')->where('slug', '=', $slug)->first();
 
+            $redirect = redirect()->route("voyager.{$dataType->slug}.index");
             return $redirect->with([
-                'message'    =>   " Order #" . 98 . " Updated Successfully",
+                'message'    =>   " Order #" . $id . " Updated Successfully",
                 'alert-type' => 'success',
             ]);
         }
